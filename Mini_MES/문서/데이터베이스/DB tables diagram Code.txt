@@ -71,8 +71,8 @@ Table raw_inbound {
   supplier_id integer
   item_id integer [not null]
   qty integer [not null]
-  mfg_date date //제조일자
-  inb_date date //입고일자
+  mfg_date timestamptz //제조일자
+  inb_date timestamptz //입고일자
   manufacturer varchar(50)//제조사 - 공급사랑 다를경우도 있음
   created_at timestamptz
 }
@@ -116,7 +116,7 @@ Table routing_steps {
   routing_id integer [not null]
   seq integer
   operation_id integer
-  machine_code varchar(50)
+  //machine_code varchar(50) //사용기계
   step_time integer
 }
 
@@ -144,4 +144,3 @@ Ref: routing_steps.operation_id > operations.operation_id
 Ref: items.supplier_id > partners.partner_id
 Ref: raw_outbound.supplier_id > partners.partner_id
 Ref: raw_outbound.item_id > items.item_id
-Ref: "raw_inbound"."qty" < "raw_inbound"."inb_date"
