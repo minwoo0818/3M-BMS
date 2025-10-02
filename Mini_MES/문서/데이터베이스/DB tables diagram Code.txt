@@ -1,0 +1,147 @@
+Table partners {
+  partner_id integer [primary key, increment]
+  partner_type varchar(20) [not null] // 'customer'|'supplier'
+  name varchar(50) [not null]
+  br_num varchar(50)
+  boss_name varchar(20)
+  boss_phone varchar(20)
+  representative_name varchar(20)
+  representative_phone varchar(20)
+  representative_email varchar(50)
+  address text
+  remark text //비고
+  active boolean [default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table items {
+  item_id integer [primary key, increment]
+  item_code varchar(20) [unique, not null]
+  item_name varchar(20) [not null]
+  item_type varchar(20) [not null] // 'sales'|'raw'
+  classification varchar(20) // 방산, 일반, 자동차, 조선, 페인트,신나,세척제,경화제
+  unit varchar(20) //L리터, g등
+  price integer
+  color varchar(20)
+  coating_method varchar(10) // 도장 방식
+  img_url text
+  remark text
+  supplier_id integer
+  active boolean [default: true]
+  created_at timestamptz
+}
+
+Table sales_items {
+  sales_item_id integer [primary key, increment]
+  partner_id integer [not null]
+  item_id integer [not null]
+  remark text
+  use_yn boolean [default: true] // 거래 종료, 거래 재개
+  created_at timestamptz
+}
+
+Table inbound {
+  inbound_id integer [primary key, increment]
+  inbound_LOT_num varchar(50) [unique, not null] // ex: LOT-yyyyMMdd-001
+  partner_id integer
+  item_id integer [not null]
+  qty integer [not null]
+  //classification varchar(20) // 예: "원자재 입고", "외주 반입", "완제품 반입" 등)
+  received_at timestamptz
+  created_at timestamptz
+  status varchar(20) // active/cancelled
+  is_outbound_processed boolean [default: false] //출고 처리 여부
+}
+
+Table outbound {
+  outbound_id integer [primary key, increment]
+  outbound_OUT_num varchar(50) [unique, not null] // ex: OUT-yyyyMMdd-001
+  partner_id integer
+  item_id integer [not null]
+  qty integer [not null]
+  shipped_at timestamptz
+  created_at timestamptz
+  status varchar(20) // active/cancelled
+}
+
+Table raw_inbound {
+  raw_inbound_id integer [primary key, increment]
+  raw_inbound_MINC_num varchar(50) [unique, not null] // ex: MINC-yyyyMMdd-001
+  supplier_id integer
+  item_id integer [not null]
+  qty integer [not null]
+  mfg_date date //제조일자
+  inb_date date //입고일자
+  manufacturer varchar(50)//제조사 - 공급사랑 다를경우도 있음
+  created_at timestamptz
+}
+
+Table raw_outbound {
+  raw_outbound_id integer [primary key, increment]
+  raw_outbound_MOUT_num varchar(50) [unique, not null] // ex: MOUT-yyyyMMdd-001
+  supplier_id integer
+  item_id integer [not null]
+  qty integer [not null]
+  shipped_at timestamptz
+  created_at timestamptz
+}
+
+Table inventory {
+  inventory_id integer [primary key, increment]
+  item_id integer [not null]
+  //location varchar(100) //창고 위치
+  qty integer [not null]
+  updated_at timestamptz
+}
+
+Table operations {
+  operation_id integer [primary key, increment]
+  code varchar(20) [unique, not null]
+  name varchar(20) [not null]
+  description text
+  standard_time integer // minutes
+  created_at timestamptz
+}
+
+Table routings {
+  routing_id integer [primary key, increment]
+  item_id integer [not null]
+  name varchar(50)
+  created_at timestamptz
+}
+
+Table routing_steps {
+  step_id integer [primary key, increment]
+  routing_id integer [not null]
+  seq integer
+  operation_id integer
+  machine_code varchar(50)
+  step_time integer
+}
+
+Table files {
+  file_id integer [primary key, increment]
+  ref_table varchar(20) //저장 테이블 위치
+  ref_id integer // 저장된 테이블에서 id
+  filename varchar(255) 
+  url text
+  created_at timestamptz
+}
+
+
+Ref: sales_items.partner_id > partners.partner_id
+Ref: sales_items.item_id > items.item_id
+Ref: inbound.partner_id > partners.partner_id
+Ref: inbound.item_id > items.item_id
+Ref: outbound.partner_id > partners.partner_id
+Ref: outbound.item_id > items.item_id
+Ref: raw_inbound.supplier_id > partners.partner_id
+Ref: raw_inbound.item_id > items.item_id
+Ref: inventory.item_id > items.item_id
+Ref: routing_steps.routing_id > routings.routing_id
+Ref: routing_steps.operation_id > operations.operation_id
+Ref: items.supplier_id > partners.partner_id
+Ref: raw_outbound.supplier_id > partners.partner_id
+Ref: raw_outbound.item_id > items.item_id
+Ref: "raw_inbound"."qty" < "raw_inbound"."inb_date"
