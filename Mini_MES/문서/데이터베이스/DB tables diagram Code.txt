@@ -1,6 +1,9 @@
+////////////////////////////////////////////////////
+// 거래처 정보
+////////////////////////////////////////////////////
 Table partners {
   partner_id integer [primary key, increment]
-  partner_type varchar(20) [not null] // 'customer'|'supplier'
+  partner_type varchar(20) [not null] // 'customer' | 'supplier'
   name varchar(50) [not null]
   br_num varchar(50)
   boss_name varchar(20)
@@ -9,22 +12,25 @@ Table partners {
   representative_phone varchar(20)
   representative_email varchar(50)
   address text
-  remark text //비고
+  remark text
   active boolean [default: true]
   created_at timestamptz
   updated_at timestamptz
 }
 
+////////////////////////////////////////////////////
+// 품목 정보
+////////////////////////////////////////////////////
 Table items {
   item_id integer [primary key, increment]
   item_code varchar(20) [unique, not null]
   item_name varchar(20) [not null]
-  item_type varchar(20) [not null] // 'sales'|'raw'
-  classification varchar(20) // 방산, 일반, 자동차, 조선, 페인트,신나,세척제,경화제
-  unit varchar(20) //L리터, g등
+  item_type varchar(20) [not null] // 'sales' | 'raw'
+  classification varchar(20) // 방산, 일반, 자동차, 조선, 페인트, 신나, 세척제, 경화제
+  unit varchar(20) // L, g 등
   price integer
   color varchar(20)
-  coating_method varchar(10) // 도장 방식
+  coating_method varchar(10)
   img_url text
   remark text
   supplier_id integer
@@ -32,29 +38,47 @@ Table items {
   created_at timestamptz
 }
 
+////////////////////////////////////////////////////
+// 거래처별 판매 품목 (N:M)
+////////////////////////////////////////////////////
 Table sales_items {
   sales_item_id integer [primary key, increment]
   partner_id integer [not null]
   item_id integer [not null]
   remark text
-  use_yn boolean [default: true] // 거래 종료, 거래 재개
+  use_yn boolean [default: true]
   created_at timestamptz
 }
 
-Table inbound {
+////////////////////////////////////////////////////
+// 완제품 입고
+////////////////////////////////////////////////////
+Table sales_inbound {
   inbound_id integer [primary key, increment]
   inbound_LOT_num varchar(50) [unique, not null] // ex: LOT-yyyyMMdd-001
   partner_id integer
   item_id integer [not null]
   qty integer [not null]
-  //classification varchar(20) // 예: "원자재 입고", "외주 반입", "완제품 반입" 등)
   received_at timestamptz
   created_at timestamptz
   status varchar(20) // active/cancelled
-  is_outbound_processed boolean [default: false] //출고 처리 여부
+  is_outbound_processed boolean [default: false]
 }
 
-Table outbound {
+////////////////////////////////////////////////////
+// 입고 - 라우팅 매핑 (입고 시 선택한 라우팅들)
+////////////////////////////////////////////////////
+Table inbound_routings {
+  inbound_routing_id integer [primary key, increment]
+  inbound_id integer [not null] // FK → sales_inbound
+  routing_id integer [not null] // FK → routings
+  seq integer [not null] // 적용 순서 (1, 2, 3, ...)
+}
+
+////////////////////////////////////////////////////
+// 완제품 출고
+////////////////////////////////////////////////////
+Table sales_outbound {
   outbound_id integer [primary key, increment]
   outbound_OUT_num varchar(50) [unique, not null] // ex: OUT-yyyyMMdd-001
   partner_id integer
@@ -62,21 +86,27 @@ Table outbound {
   qty integer [not null]
   shipped_at timestamptz
   created_at timestamptz
-  status varchar(20) // active/cancelled
+  status varchar(20)
 }
 
+////////////////////////////////////////////////////
+// 원자재 입고
+////////////////////////////////////////////////////
 Table raw_inbound {
   raw_inbound_id integer [primary key, increment]
   raw_inbound_MINC_num varchar(50) [unique, not null] // ex: MINC-yyyyMMdd-001
   supplier_id integer
   item_id integer [not null]
   qty integer [not null]
-  mfg_date timestamptz //제조일자
-  inb_date timestamptz //입고일자
-  manufacturer varchar(50)//제조사 - 공급사랑 다를경우도 있음
+  mfg_date timestamptz
+  inb_date timestamptz
+  manufacturer varchar(50)
   created_at timestamptz
 }
 
+////////////////////////////////////////////////////
+// 원자재 출고
+////////////////////////////////////////////////////
 Table raw_outbound {
   raw_outbound_id integer [primary key, increment]
   raw_outbound_MOUT_num varchar(50) [unique, not null] // ex: MOUT-yyyyMMdd-001
@@ -87,14 +117,19 @@ Table raw_outbound {
   created_at timestamptz
 }
 
+////////////////////////////////////////////////////
+// 재고 현황
+////////////////////////////////////////////////////
 Table inventory {
   inventory_id integer [primary key, increment]
   item_id integer [not null]
-  //location varchar(100) //창고 위치
   qty integer [not null]
   updated_at timestamptz
 }
 
+////////////////////////////////////////////////////
+// 공정 마스터
+////////////////////////////////////////////////////
 Table operations {
   operation_id integer [primary key, increment]
   code varchar(20) [unique, not null]
@@ -104,43 +139,54 @@ Table operations {
   created_at timestamptz
 }
 
+////////////////////////////////////////////////////
+// 라우팅 (공정 루트)
+////////////////////////////////////////////////////
 Table routings {
   routing_id integer [primary key, increment]
-  item_id integer [not null]
-  name varchar(50)
+  name varchar(50) [not null] // 라우팅 이름
+  total_time integer // 총 소요시간 (분)
   created_at timestamptz
 }
 
+////////////////////////////////////////////////////
+// 라우팅 단계 (공정 순서)
+////////////////////////////////////////////////////
 Table routing_steps {
   step_id integer [primary key, increment]
   routing_id integer [not null]
-  seq integer
-  operation_id integer
-  //machine_code varchar(50) //사용기계
-  step_time integer
+  seq integer [not null]
+  operation_id integer [not null]
 }
 
+////////////////////////////////////////////////////
+// 파일 관리
+////////////////////////////////////////////////////
 Table files {
   file_id integer [primary key, increment]
-  ref_table varchar(20) //저장 테이블 위치
-  ref_id integer // 저장된 테이블에서 id
-  filename varchar(255) 
+  ref_table varchar(20)
+  ref_id integer
+  filename varchar(255)
   url text
   created_at timestamptz
 }
 
-
+////////////////////////////////////////////////////
+// 관계 정의
+////////////////////////////////////////////////////
 Ref: sales_items.partner_id > partners.partner_id
 Ref: sales_items.item_id > items.item_id
-Ref: inbound.partner_id > partners.partner_id
-Ref: inbound.item_id > items.item_id
-Ref: outbound.partner_id > partners.partner_id
-Ref: outbound.item_id > items.item_id
+Ref: sales_inbound.partner_id > partners.partner_id
+Ref: sales_inbound.item_id > items.item_id
+Ref: inbound_routings.inbound_id > sales_inbound.inbound_id
+Ref: inbound_routings.routing_id > routings.routing_id
+Ref: sales_outbound.partner_id > partners.partner_id
+Ref: sales_outbound.item_id > items.item_id
 Ref: raw_inbound.supplier_id > partners.partner_id
 Ref: raw_inbound.item_id > items.item_id
+Ref: raw_outbound.supplier_id > partners.partner_id
+Ref: raw_outbound.item_id > items.item_id
 Ref: inventory.item_id > items.item_id
 Ref: routing_steps.routing_id > routings.routing_id
 Ref: routing_steps.operation_id > operations.operation_id
 Ref: items.supplier_id > partners.partner_id
-Ref: raw_outbound.supplier_id > partners.partner_id
-Ref: raw_outbound.item_id > items.item_id
