@@ -32,17 +32,18 @@ Table operations {
 
 /////////////////////////////////////////
 // 수주대상품목 (품목)
-// - classification: 방산, 일반, 자동차, 조선
 /////////////////////////////////////////
 Table sales_items {
   sales_item_id integer [primary key, increment]
+  partner_id integer [not null]               // FK → partners.partner_id
   item_code varchar(20) [not null]
-  item_name varchar(100) [not null]
-  classification varchar(20) [not null]
+  item_name varchar(20) [not null]
+  classification varchar(20) [not null]       // 방산, 일반, 자동차, 조선
   unit varchar(20)
-  price numeric(14,2)
+  price integer
   color varchar(20)
   coating_method varchar(10)
+  total_operations integer [default: 0]       // 총 공정 개수
   remark text
   active boolean [default: true]
   created_at timestamptz
@@ -57,10 +58,7 @@ Table sales_item_operations {
   sales_item_id integer [not null]     // FK → sales_items
   operation_id integer [not null]      // FK → operations
   seq integer [not null]               // 순서
-  plan_time integer                    // 예정시간(분)
   start_time timestamptz               // 공정 시작시간
-  end_time timestamptz                 // 공정 종료시간
-  status varchar(20)                   // waiting, in_progress, done, hold 등
   remark text
   created_at timestamptz
   updated_at timestamptz
@@ -69,8 +67,8 @@ Table sales_item_operations {
 /////////////////////////////////////////
 // 원자재
 /////////////////////////////////////////
-Table raw_items {
-  raw_item_id integer [primary key, increment]
+Table raws_items {
+  raws_item_id integer [primary key, increment]
   item_code varchar(20) [not null]
   item_name varchar(100) [not null]
   classification varchar(20) [not null] // 페인트, 신나, 세척제, 경화제
@@ -87,7 +85,8 @@ Table raw_items {
 Table sales_inbound {
   inbound_id integer [primary key, increment]
   inbound_LOT_num varchar(50) [unique, not null]
-  item_id integer [not null]          // FK → sales_items
+  item_id integer [not null]                  // FK → sales_items
+  last_operation_seq integer [default: 0]     // 완료된 마지막 공정 순서
   qty integer [not null]
   received_at timestamptz
   created_at timestamptz
@@ -113,7 +112,7 @@ Table sales_outbound {
 /////////////////////////////////////////
 Table raw_inbound {
   raw_inbound_id integer [primary key, increment]
-  supplier_id integer
+  raw_inbound_MINC_num varchar(50) [unique, not null] //ex: MINC-YYYYMMDD-001
   raw_item_id integer [not null]       // FK → raw_items
   qty integer [not null]
   inb_date timestamptz
@@ -122,7 +121,7 @@ Table raw_inbound {
 
 Table raw_outbound {
   raw_outbound_id integer [primary key, increment]
-  supplier_id integer
+  raw_outbound_MOUT_num varchar(50) [unique, not null] //ex: MOUT-YYYYMMDD-001
   raw_item_id integer [not null]       // FK → raw_items
   qty integer [not null]
   shipped_at timestamptz
@@ -134,7 +133,7 @@ Table raw_outbound {
 /////////////////////////////////////////
 Table inventory {
   inventory_id integer [primary key, increment]
-  raw_item_id integer
+  raw_item_id integer		// FK → items.item_id
   qty integer [not null]
   updated_at timestamptz
 }
@@ -162,3 +161,4 @@ Ref: raw_outbound.raw_item_id > raw_items.raw_item_id
 Ref: inventory.raw_item_id > raw_items.raw_item_id
 Ref: raw_items.supplier_id > partners.partner_id
 Ref: files.sales_item_id > sales_items.sales_item_id
+Ref: sales_items.partner_id > partners.partner_id
