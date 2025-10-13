@@ -144,6 +144,7 @@ Table inventory {
 Table files {
   file_id integer [primary key, increment]
   sales_item_id integer               // FK → sales_items
+  origin_filename varchar(255)
   filename varchar(255)
   url text
   created_at timestamptz
@@ -156,9 +157,9 @@ Ref: sales_item_operations.sales_item_id > sales_items.sales_item_id
 Ref: sales_item_operations.operation_id > operations.operation_id
 Ref: sales_inbound.item_id > sales_items.sales_item_id
 Ref: sales_outbound.item_id > sales_items.sales_item_id
-Ref: raw_inbound.raw_item_id > raw_items.raw_item_id
-Ref: raw_outbound.raw_item_id > raw_items.raw_item_id
-Ref: inventory.raw_item_id > raw_items.raw_item_id
-Ref: raw_items.supplier_id > partners.partner_id
+Ref: raw_inbound.raw_item_id > raws_items.raws_item_id
+Ref: raw_outbound.raw_item_id > raws_items.raws_item_id
+Ref: inventory.raw_item_id > raws_items.raws_item_id
+Ref: raws_items.supplier_id > partners.partner_id
 Ref: files.sales_item_id > sales_items.sales_item_id
 Ref: sales_items.partner_id > partners.partner_id
