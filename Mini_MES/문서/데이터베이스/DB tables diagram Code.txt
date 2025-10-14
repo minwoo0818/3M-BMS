@@ -90,6 +90,7 @@ Table sales_inbound {
   qty integer [not null]
   received_at timestamptz
   created_at timestamptz
+  updated_at timestamptz
   is_cancelled boolean [default: false]
   is_outbound_processed boolean [default: false]
 }
@@ -104,6 +105,7 @@ Table sales_outbound {
   qty integer [not null]
   shipped_at timestamptz
   created_at timestamptz
+  updated_at timestamptz
   status varchar(20)
 }
 

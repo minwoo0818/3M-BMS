@@ -1,0 +1,225 @@
+# 1. 목적 / 범위
+
+* 목적: 도장공정 중심의 Mini-MES 시스템을 개발하기 위한 프로그램 설계서
+* 범위: 수주대상 품목(완제품) 입·출고, 원자재 입·출고·재고, 품목(수주/원자재) 관리, 라우팅(공정)관리, 공정 진행(작업지시/진행상태), 파일(이미지) 관리, 엑셀 출력/이력관리 등. (요구서 REQ-001 ~ REQ-005 반영).
+
+---
+
+# 2. 핵심 설계 원칙(요구 반영)
+
+1. **데이터 무결성 우선**: 외래키, 제약, 상태 플래그(`active`/`is_cancelled` 등)로 실제 삭제 금지(상태 변경).
+2. **추적성(LOT 기반)**: 수주 입고는 `inbound_LOT_num`으로 LOT 발급·추적. 원자재는 입고별로 별도 데이터로 처리(입고 규격 * 수량 = 총량).
+3. **공정 완료 기준 출고**: 출고 허용은 `sales_items.total_operations = sales_inbound.last_operation_seq` 일치 시만 허용. (간단·성능 우선)
+4. **자동번호**: LOT/IN/OUT 번호 자동 발급(시퀀스 기반 안전 발급).
+
+---
+
+# 3. 핵심 데이터 모델 요약 (주요 테이블 / 중요한 컬럼)
+
+(간단 요약 — 상세 DDL은 원하시면 파일로 드립니다)
+
+* `partners`(거래처/매입처)
+
+  * partner_id, partner_type(customer|supplier), name, active, created_at 등.
+
+* `sales_items`(수주대상 품목)
+
+  * sales_item_id, partner_id (FK → partners), item_code, item_name, classification(방산/일반/자동차/조선), unit, price, color, coating_method, total_operations (총 공정수), active, created_at. (요구: 거래처와 연결 필수).
+
+* `sales_item_operations`(수주품목별 공정 순서)
+
+  * item_operation_id, sales_item_id, operation_id, seq, plan_time, start_time, end_time, remark, created_at. (`status`는 계산으로 대체 가능 — 앞서 합의한 대로 공정 상태는 `last_operation_seq` 기반으로 계산 가능하나, 공정별 모니터링 필요 시 유지 가능)
+
+* `operations`(공정 마스터)
+
+  * operation_id, code, name, description, standard_time 등. (공정 코드 고유)
+
+* `sales_inbound`(완제품 입고)
+
+  * inbound_id, inbound_LOT_num (시퀀스 자동생성), item_id(FK→sales_items), last_operation_seq (완료된 마지막 공정 seq), qty, received_at, is_cancelled, is_outbound_processed, created_at.
+
+* `sales_outbound`(완제품 출고)
+
+  * outbound_id, outbound_OUT_num, item_id, qty, shipped_at, created_at, status.
+
+* `raw_items`(원자재 마스터)
+
+  * raw_item_id, item_code, item_name, classification(페인트/신나/세척제/경화제), unit, price, supplier_id(FK→partners), active, created_at.
+
+* `raw_inbound` / `raw_outbound`
+
+  * raw_inbound_id / raw_outbound_id, raw_item_id(FK), qty, inb_date / shipped_at, created_at. (supplier_id 제거 — `raw_item`에서 추적).
+
+* `inventory`
+
+  * inventory_id, raw_item_id, qty, updated_at (총 재고 집계; 입/출고 시 트랜잭션으로 업데이트)
+
+* `files`, `audit_logs` 등.
+
+---
+
+# 4. 주요 업무 흐름(Use Case) — 상세
+
+## 4.1 수주대상 품목 입고 등록 (REQ-001)
+
+* 사용자: 생산관리자
+* 입력: 거래처명/품목 조회 → 품목 선택 → 입고 수량, 입고일자 입력
+* 처리:
+
+  1. 조회 시 `sales_items.active = true`만 노출(거래종료 품목은 제외).
+  2. 입고 등록 요청 → DB 트랜잭션 시작
+  3. `inbound_LOT_num` 자동생성(seq) → insert `sales_inbound` with `last_operation_seq = 0`
+  4. `inventory`(완제품 재고) 별도 관리가 필요하면 `inventory`에 입고 반영(설계에 따라 별도)
+  5. audit_logs 생성, 트랜잭션 커밋
+* 결과: LOT 발급, 생성일 자동 기입. (엑셀 다운로드/상세조회/항목 클릭 → 라우팅·공정현황 연결)
+
+## 4.2 공정 진행/업데이트
+
+* 공정 시작/완료 처리 시:
+
+  * 공정 완료 시 `sales_inbound.last_operation_seq`를 공정의 seq로 업데이트(동일 LOT 기준).
+  * 시스템은 `sales_items.total_operations`와 비교하여 완료 판단.
+  * 공정별 시작시간/종료시간은 `sales_item_operations` 또는 `work_progress`에 기록.
+
+## 4.3 출고 등록 (완제품)
+
+* 조회 시: 입고 중에서 `is_cancelled = false` AND `is_outbound_processed = false`만 노출.
+* 출고 전 검증:
+
+  * 조회된 `sales_inbound`의 `last_operation_seq`와 `sales_items.total_operations` 비교
+  * 일치(완료) 시에만 출고 등록 허용. (그렇지 않으면 에러 응답)
+* 출고 처리:
+
+  1. 출고번호(OUT-yyyymmdd-###) 자동 생성(시퀀스)
+  2. `sales_outbound`에 insert, `sales_inbound.is_outbound_processed = true` 업데이트
+  3. 재고/inventory 갱신(감소), audit 로그, 커밋
+
+## 4.4 원자재 입·출고 / 재고
+
+* 원자재 입고 시 `raw_inbound`에 기록(입고 규격 * 수량 = 총량 계산 규칙 적용).
+* 원자재 출고 시 재고 확인: 재고 없는 품목은 출고 조회시 표시되지 않음.
+* 재고 집계는 실시간 `inventory` 업데이트(입고 시 증가, 출고 시 감소).
+
+---
+
+# 5. API 설계(요약 — REST/JSON)
+
+(각 엔드포인트는 인증/권한 필요 — role 기반 접근 제어 권장)
+
+## 5.1 품목 / 거래처
+
+* GET `/api/partners` — 파라미터: type, name, active
+* POST `/api/partners` — 거래처 등록
+* GET `/api/sales-items` — 파라미터: partner_id, code, name, classification, active
+* POST `/api/sales-items` — 등록 (필수: partner_id, item_code, item_name, classification, total_operations)
+
+## 5.2 입고/출고
+
+* POST `/api/sales-inbound` — body: item_id, qty, received_at -> 반환 inbound_LOT_num
+* GET `/api/sales-inbound` — 조회(필터: partner, item_code, lot, date range, is_outbound_processed)
+* PUT `/api/sales-inbound/:id` — 수정 (qty, received_at 허용)
+* POST `/api/sales-outbound` — 출고 등록 (검증: last_operation_seq == total_operations)
+* GET `/api/sales-outbound`, PUT `/api/sales-outbound/:id`
+
+## 5.3 원자재
+
+* POST `/api/raw-inbound`, GET `/api/raw-inbound`, POST `/api/raw-outbound`, GET `/api/inventory` 등
+
+## 5.4 공정
+
+* GET `/api/sales-item-operations?sales_item_id=...`
+* POST `/api/sales-item-operations/:id/complete` — 공정 완료 처리 → 업데이트 `sales_inbound.last_operation_seq`
+
+---
+
+# 6. 화면(화면목록 + 주요 요소)
+
+(요구서에 맞춘 최소 화면)
+
+1. 대시보드: 진행중 공정/출고 대기 LOT 리스트
+2. 품목관리(수주대상): 목록, 등록(거래처 선택), 상세(이미지, 라우팅 설정), 엑셀 다운로드
+3. 라우팅/공정 관리: 공정 등록/수정/삭제, 라우팅 편집
+4. 입고(완제품): 품목 검색(거래처, 품목번호, 품목명), 입고 등록(Lot 자동발급), 입고 이력, LOT 클릭→공정진행현황
+5. 공정 진행현황: 선택 LOT의 공정별 시작시간/진행상태 → 특정 공정 선택으로 상태 업데이트 가능
+6. 출고: 입고 조회(출고되지 않은 항목만), 출고 등록(자동 OUT 번호), 출고 이력
+7. 원자재 입/출고 및 재고현황: 검색/입고/출고/엑셀 다운로드
+8. 파일관리: 품목 이미지 업로드/다운로드
+
+각 화면은 엑셀 다운로드 버튼을 제공 (요구사항).
+
+---
+
+# 7. 자동번호 생성(안전 권장 방법)
+
+* **시퀀스 기반 생성** (PostgreSQL 예)
+
+  * `seq_inbound_lot`, `seq_outbound_no`, `seq_raw_inbound`, `seq_raw_outbound`
+  * 번호 포맷 함수: `LOT-YYYYMMDD-<seq3>` 등
+* 이유: 동시성 환경에서 안전(트랜잭션/시퀀스 사용). (요구서 명시: 자동부여).
+
+---
+
+# 8. 트랜잭션·동시성·무결성
+
+* 입고/출고/재고 업데이트는 단일 트랜잭션으로 처리(입고 insert + inventory update 모두 커밋/롤백 동기화).
+* 재고 감소(출고) 시 `SELECT ... FOR UPDATE`로 해당 재고 row 락 후 검증/감소 권장.
+* 공정 완료시 `sales_inbound.last_operation_seq` 갱신은 동일 LOT를 기준으로 동시 업데이트 주의 — optimistic lock(version) 또는 SELECT FOR UPDATE 사용 권장.
+
+---
+
+# 9. 권한·보안
+
+* 인증: JWT 기반 토큰 또는 세션
+* 권한: 역할 기반(예: 관리자, 생산관리자, 창고담당자, 조회전용)
+* 민감정보(비밀번호) 해시(bcrypt), DB 연결 SSL, 파일 업로드는 S3/객체스토리지 권장
+
+---
+
+# 10. 검사·테스트 케이스(주요)
+
+* 입고 등록: 정상(LOT 발급, created_at 자동), 비정상(거래종료 품목 미등록)
+* 공정 진행→출고 제한: 공정 완료 전 출고 시 에러, 완료 후 출고 성공
+* 원자재 입고 총량 계산: (입고 규격 * 입고 수량) 계산 검증
+* 재고 동시성: 동시 출고 요청 두 건에서 재고 부족 처리 확인
+* 엑셀 다운로드: 조회 필터 적용 시 데이터형식/컬럼 일치 확인
+
+---
+
+# 11. 수락 기준(요구서 맵핑)
+
+* REQ-001 ~ REQ-005의 각 항목(입고 등록, 이력조회, 출고 조건, 엑셀 출력, 품목등록/수정/거래종료, 라우팅 CRUD, 업체 CRUD) 모두 구현되어야 수락. 각 화면에서 지정된 필터·엑셀·자동번호·상태 변경 기능 동작 확인 필요.
+
+---
+
+# 12. 마이그레이션·개발 산출물 (제안)
+
+* 산출물
+
+  1. 완성 DDL(SQL) — 모든 FK/인덱스/시퀀스 포함 (PostgreSQL 권장)
+  2. DBML 파일(또는 dbdiagram) — ERD 시각화용
+  3. OpenAPI 명세 (엔드포인트 + 요청/응답 예시)
+  4. 프론트 화면 와이어프레임(주요화면)
+  5. 테스트 시나리오 문서
+* 우선순위: DDL → 핵심 API (입고/공정 완료/출고) → 프론트 입고/공정/출고 화면 → 원자재 기능
+
+---
+
+# 13. 기타(운영 고려)
+
+* 대용량 이력(공정 로그, 작업내역)은 파티셔닝(날짜 기준) 고려
+* 로그·감사: 모든 상태 변경은 `audit_logs`에 남김
+* 파일(이미지)은 S3/객체스토리지에 저장, DB에는 메타만 저장
+
+---
+
+# 14. 다음 작업(제가 바로 해드릴 수 있는 것 — 선택)
+
+1. 변경 반영된 **최종 DBML + PostgreSQL DDL(.sql)** 생성
+2. ERD PNG 이미지 생성
+3. OpenAPI (Swagger) 스펙 생성 (입고/출고/공정 관련 엔드포인트 우선)
+4. 프론트 화면별 간단 와이어프레임(이미지)
+5. 테스트 케이스(Excel/CSV)로 추출
+
+원하시는 항목 번호(복수 가능)를 알려주시면 즉시 만들어 드릴게요 — 예: `1,2` 또는 `1`만 해달라 등.
+
+(참고: 모든 설계는 업로드하신 기능정의서·요구사항정의서를 반영했습니다. 필요하면 설계서 내 항목별 매핑표(요구ID → 구현기능)도 추가로 드립니다.)
