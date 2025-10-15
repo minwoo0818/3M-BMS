@@ -1,6 +1,7 @@
 import Sidebar from './conponents/Sidebar'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ProcessRegisterPage from './pages/ProcessRegisterPage';
+import SalesHistoryQueryPage from './pages/SalesHistoryPage';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
           <Routes>
             {/* ... 페이지 라우트 설정 ... */}
             <Route path="/info/routing" element={<ProcessRegisterPage />} />
+            <Route path="/order/history/:type" element={<SalesHistoryQueryPage />} />
           </Routes>
         </div>
       </div>

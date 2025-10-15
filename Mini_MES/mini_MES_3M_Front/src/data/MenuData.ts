@@ -6,14 +6,14 @@ export const menuItems = [
         name: '입고', // 2 depth (중간 항목)
         items: [
           { name: '등록', path: '/order/inbound/register' }, // 3 depth (소항목)
-          { name: '이력조회', path: '/order/inbound/history' },
+          { name: '이력조회', path: '/order/history/inbound' },
         ]
       },
       { 
         name: '출고', // 2 depth
         items: [
           { name: '등록', path: '/order/outbound/register' },
-          { name: '이력조회', path: '/order/outbound/history' },
+          { name: '이력조회', path: '/order/history/outbound' },
         ]
       },
       { 
