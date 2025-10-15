@@ -1,5 +1,6 @@
 import Sidebar from './conponents/Sidebar'
-import { BrowserRouter, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import ProcessRegisterPage from './pages/ProcessRegisterPage';
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <div style={{ flexGrow: 1, padding: '20px' }}>
           <Routes>
             {/* ... 페이지 라우트 설정 ... */}
+            <Route path="/info/routing" element={<ProcessRegisterPage />} />
           </Routes>
         </div>
       </div>
