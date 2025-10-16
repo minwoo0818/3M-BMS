@@ -2,6 +2,9 @@ import Sidebar from './conponents/Sidebar'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ProcessRegisterPage from './pages/ProcessRegisterPage';
 import SalesHistoryQueryPage from './pages/SalesHistoryPage';
+import SalesItemInboundPage from './pages/SalesItemInboundPage';
+import SalesItemRegisterPage from './pages/SalesItemRegisterPage';
+import SalesItemOutboundPage from './pages/SalesItemOutboundPage';
 
 const App = () => {
   return (
@@ -17,6 +20,9 @@ const App = () => {
             {/* ... 페이지 라우트 설정 ... */}
             <Route path="/info/routing" element={<ProcessRegisterPage />} />
             <Route path="/order/history/:type" element={<SalesHistoryQueryPage />} />
+            <Route path="/order/item/register" element={<SalesItemRegisterPage />} />
+            <Route path="/order/inbound/register" element={<SalesItemInboundPage />} />
+            <Route path="/order/outbound/register" element={<SalesItemOutboundPage />} />
           </Routes>
         </div>
       </div>
