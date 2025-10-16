@@ -11,6 +11,7 @@ import PartnersReg from "./pages/PartnersReg";
 import PartnersList from "./pages/PartnersList";
 import PartnersDetail from "./pages/PartnersDetail";
 import RawItemReg from "./pages/RawItemReg";
+import RawsHistoryPage from "./pages/RawsHistoryPage"
 
 const App = () => {
   return (
@@ -73,6 +74,11 @@ const App = () => {
               <Route
                 path="/shipping-certificate/:documentId"
                 element={<ShipmentCertificatePage />}
+              />
+              {/* 원자재 입고 이력조회 */}
+              <Route
+                path="/raw/history/:type"
+                element={<RawsHistoryPage />}
               />
             </Routes>
           </div>

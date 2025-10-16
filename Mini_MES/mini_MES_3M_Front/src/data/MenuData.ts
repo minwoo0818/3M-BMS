@@ -32,14 +32,14 @@ export const menuItems = [
         name: "입고", // 2 depth
         items: [
           { name: "입고 등록", path: "/raw/inbound/register" },
-          { name: "입고 이력조회", path: "/raw/inbound/history" },
+          { name: "입고 이력조회", path: "/raw/history/inbound" },
         ],
       },
       {
         name: "출고",
         items: [
           { name: "출고 등록", path: "/raw/outbound/register" },
-          { name: "출고 이력조회", path: "/raw/outbound/history" },
+          { name: "출고 이력조회", path: "/raw/history/outbound" },
         ],
       },
       {

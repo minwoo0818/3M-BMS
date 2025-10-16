@@ -175,6 +175,14 @@ export const useCommonStyles = () => {
       whiteSpace: 'nowrap'
     } as const,
 
+        tdCenter: {
+      textAlign: 'center'
+    } as React.CSSProperties,
+    tdRight: {
+      textAlign: 'right',
+      fontWeight: '600',
+    } as React.CSSProperties,
+
     tdHover: { backgroundColor: '#eff6ff' },
 
     paginationContainer: {
@@ -205,5 +213,6 @@ export const useCommonStyles = () => {
       color: isActive ? 'white' : '#4b5563',
       fontWeight: isActive ? 600 : 400,
     }),
+    
   }), []);
 };
