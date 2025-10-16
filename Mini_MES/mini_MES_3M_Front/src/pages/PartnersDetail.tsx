@@ -20,7 +20,7 @@ import { useNavigate, useParams } from "react-router-dom";
 
 interface PartnerData {
   id: number;
-  name: string; // 업체명
+  partnerName: string; // 업체명
   brNum: string; // 사업자등록번호
   bossName: string; // 대표명
   bossPhone: string; // 대표 전화번호
@@ -36,7 +36,7 @@ interface PartnerData {
 const dummyData: PartnerData[] = [
   {
     id: 1,
-    name: "코드하우스",
+    partnerName: "코드하우스",
     brNum: "123-456789",
     bossName: "박준형",
     bossPhone: "055-123-4567",
@@ -50,7 +50,7 @@ const dummyData: PartnerData[] = [
   },
   {
     id: 2,
-    name: "구트하우스",
+    partnerName: "구트하우스",
     brNum: "987-654321",
     bossName: "김지훈",
     bossPhone: "051-987-6543",
@@ -133,7 +133,7 @@ const PartnersDetail = () => {
         {/* ✅ 기본 정보 (반복문으로 읽기 전용 TextField 바인딩) */}
         {(
           [
-            "name",
+            "partnerName",
             "brNum",
             "bossName",
             "bossPhone",
@@ -146,7 +146,7 @@ const PartnersDetail = () => {
           <TextField
             key={key}
             label={
-              key === "name"
+              key === "partnerName"
                 ? "업체명"
                 : key === "brNum"
                 ? "사업자 등록번호"

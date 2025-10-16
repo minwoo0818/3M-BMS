@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 
 interface PartnerData {
   id: number;
-  name: string;
+  partnerName: string;
   brNum: string;
   bossName: string;
   bossPhone: string;
@@ -37,7 +37,7 @@ interface PartnerData {
 const dummyData: PartnerData[] = [
   {
     id: 1,
-    name: "코드하우스",
+    partnerName: "코드하우스",
     brNum: "123-456789",
     bossName: "박준형",
     bossPhone: "055-123-4567",
@@ -51,7 +51,7 @@ const dummyData: PartnerData[] = [
   },
   {
     id: 2,
-    name: "구트하우스",
+    partnerName: "구트하우스",
     brNum: "987-654321",
     bossName: "김지훈",
     bossPhone: "051-987-6543",
@@ -65,7 +65,7 @@ const dummyData: PartnerData[] = [
   },
   {
     id: 3,
-    name: "고투하우스",
+    partnerName: "고투하우스",
     brNum: "123-456789",
     bossName: "홍석민",
     bossPhone: "055-123-4567",
@@ -85,7 +85,7 @@ const PartnersList: React.FC = () => {
   const [tab, setTab] = useState<"customer" | "supplier">("customer");
 
   const [searchField, setSearchField] = useState<
-    "total" | "name" | "representativeName"
+    "total" | "partnerName" | "representativeName"
   >("total");
   const [searchKeyword, setSearchKeyword] = useState("");
 
@@ -95,7 +95,7 @@ const PartnersList: React.FC = () => {
     if (!keyword) return true;
     if (searchField === "total")
       return (
-        p.name.toLowerCase().includes(keyword) ||
+        p.partnerName.toLowerCase().includes(keyword) ||
         p.representativeName.toLowerCase().includes(keyword)
       );
     return String(p[searchField]).toLowerCase().includes(keyword);
@@ -116,7 +116,7 @@ const PartnersList: React.FC = () => {
       align: "center",
     },
     {
-      field: "name",
+      field: "partnerName",
       headerName: "업체명",
       width: 200,
       headerAlign: "center",
@@ -216,7 +216,7 @@ const PartnersList: React.FC = () => {
             }}
           >
             <MenuItem value="total">전체</MenuItem>
-            <MenuItem value="name">업체명</MenuItem>
+            <MenuItem value="partnerName">업체명</MenuItem>
             <MenuItem value="representativeName">담당자명</MenuItem>
           </Select>
         </FormControl>
