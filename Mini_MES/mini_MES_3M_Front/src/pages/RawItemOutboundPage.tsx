@@ -3,7 +3,7 @@ import { useCommonStyles } from '../style/useCommonStyles';
 import { useProcessStyles } from '../style/useProcessStyles';
 import { useSalesHistoryStyles } from '../style/useSalesHistoryStyles';
 
-const SalesItemInboundPage: React.FC = () => {
+const RawItemOutboundPage: React.FC = () => {
   const common = useCommonStyles();
   const process = useProcessStyles();
   const history = useSalesHistoryStyles();
@@ -14,13 +14,13 @@ const SalesItemInboundPage: React.FC = () => {
 
   const data = [
     {
-      partnerName: '코드 하우스',
+      supplierName: '코드하우스',
       itemCode: 'Code-001',
-      itemName: '핀걸이 스프링',
-      classification: '방산',
-      remark: '고객 요청사항 있음',
-      inboundqty: '',
-      inboundDate: '',
+      itemName: '핀걸이스프링',
+      inventoryUnit: '60kg',
+      manufacturer: '창원대학교',
+      outboundqty: '',
+      outboundDate: ''
     },
   ];
 
@@ -38,7 +38,7 @@ const SalesItemInboundPage: React.FC = () => {
 
   return (
     <div style={common.container}>
-      <h1 style={common.header}>수주품목 - 입고 등록</h1>
+      <h1 style={common.header}>원자재품목 - 출고 등록</h1>
 
       {/* 검색 영역 */}
       <div style={common.searchContainer}>
@@ -50,7 +50,7 @@ const SalesItemInboundPage: React.FC = () => {
               style={common.searchSelect}
             >
               <option value="전체">전체</option>
-              <option value="partnerName">거래처명</option>
+              <option value="partnerName">매입처명</option>
               <option value="itemName">품목명</option>
               <option value="itemCode">품목번호</option>
             </select>
@@ -66,15 +66,11 @@ const SalesItemInboundPage: React.FC = () => {
             type="text"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            placeholder="거래처명, 품목명, 품목 번호로 검색해 주세요"
+            placeholder="매입처명, 품목명, 품목 번호 로 검색해 주세요"
             style={history.searchInput}
           />
         </div>
-           {/* 돋보기 검색 버튼 */}
-                <button type="submit" style={common.searchButton}>
-                    {/* 돋보기 SVG 아이콘 */}
-                    <svg style={{width: '20px', height: '20px'}} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </button>
+        <button style={common.searchButton} onClick={handleSearch}>🔍</button>
       </div>
 
       {/* 테이블 영역 */}
@@ -82,24 +78,24 @@ const SalesItemInboundPage: React.FC = () => {
         <table style={{ ...common.table, fontSize: '13px' }}>
           <thead>
             <tr>
-              <th style={{ ...common.th(true, false), width: '120px', padding: '10px' }}>거래처명</th>
-              <th style={{ ...common.th(false, false), width: '120px', padding: '10px' }}>품목 번호</th>
-              <th style={{ ...common.th(false, false), width: '140px', padding: '10px' }}>품목명</th>
-              <th style={{ ...common.th(false, false), width: '90px', padding: '10px' }}>분류</th>
-              <th style={{ ...common.th(false, false), width: '250px', padding: '10px' }}>비고</th>
-              <th style={{ ...common.th(false, false), width: '100px', padding: '10px' }}>입고 수량</th>
-              <th style={{ ...common.th(false, false), width: '100px', padding: '10px' }}>입고 일자</th>
+              <th style={{ ...common.th(false, false), width: '160px', padding: '10px' }}>매입처명</th>
+              <th style={{ ...common.th(false, false), width: '180px', padding: '10px' }}>품목 번호</th>
+              <th style={{ ...common.th(false, false), width: '180px', padding: '10px' }}>품목명</th>
+              <th style={{ ...common.th(false, false), width: '50px', padding: '10px' }}>재고량(양/단위)</th>
+              <th style={{ ...common.th(false, false), width: '160px', padding: '10px' }}>제조사</th>
+              <th style={{ ...common.th(false, false), width: '100px', padding: '10px' }}>출고 수량</th>
+              <th style={{ ...common.th(false, false), width: '100px', padding: '10px' }}>출고 일자</th> 
               <th style={{ ...common.th(false, true), width: '80px', padding: '10px' }}></th>
             </tr>
           </thead>
           <tbody>
             {data.map((row, idx) => (
               <tr key={idx}>
-                <td style={{ ...common.td, width: '140px', padding: '8px' }}>{row.partnerName}</td>
+                <td style={{ ...common.td, width: '140px', padding: '8px' }}>{row.supplierName}</td>
                 <td style={{ ...common.td, width: '140px', padding: '8px' }}>{row.itemCode}</td>
-                <td style={{ ...common.td, width: '160px', padding: '8px' }}>{row.itemName}</td>
-                <td style={{ ...common.td, width: '100px', padding: '8px' }}>{row.classification}</td>
-                <td style={{ ...common.td, width: '200px', padding: '8px' }}>{row.remark}</td>
+                <td style={{ ...common.td, width: '140px', padding: '8px' }}>{row.itemName}</td>
+                <td style={{ ...common.td, width: '80px', padding: '8px' }}>{row.inventoryUnit}</td>
+                <td style={{ ...common.td, width: '100px', padding: '8px' }}>{row.manufacturer}</td>
                 <td style={{ ...common.td, width: '100px', padding: '8px' }}>
                   <input
                     type="text"
@@ -169,4 +165,4 @@ const SalesItemInboundPage: React.FC = () => {
   );
 };
 
-export default SalesItemInboundPage;
+export default RawItemOutboundPage;
