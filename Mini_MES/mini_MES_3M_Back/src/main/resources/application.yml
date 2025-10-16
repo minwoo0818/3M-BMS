@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: mini_MES_3M_Back
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/mini_mes_db
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+#       ddl-auto: update
+
+itemImgLocation: C:\3M-BMS\Mini_MES\images
