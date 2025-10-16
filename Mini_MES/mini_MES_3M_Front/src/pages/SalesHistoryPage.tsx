@@ -33,6 +33,8 @@ const COATING_TYPES = ['액체도장', '분체도장'];
 const INBOUND_CLASSIFICATION_TYPES = ['자동차', '방산', '일반', '조선'];
 const OUTBOUND_CLASSIFICATION_TYPES = ['방산', '자동차', '일반']; 
 
+type CombinedItem = InboundItem | OutboundItem;
+
 // 입고 더미 데이터 (35개)
 const DUMMY_INBOUND_DATA: InboundItem[] = Array.from({ length: 35 }, (_, i) => ({
   no: i + 1,
@@ -89,178 +91,6 @@ export default function App() {
     ...useCommonStyles(),
     ...useSalesHistoryStyles()
   };
-  // const styles = useMemo(() => ({
-  //   container: { 
-  //       padding: '20px', 
-  //       fontFamily: 'sans-serif', 
-  //       backgroundColor: '#f9f9f9', 
-  //       minHeight: '100vh' 
-  //   } as const,
-  //   // Header
-  //   header: (type: HistoryType): React.CSSProperties => ({
-  //       fontSize: '24px', 
-  //       fontWeight: 'bold', 
-  //       paddingBottom: '10px', 
-  //       marginBottom: '20px',
-  //       borderBottom: `4px solid ${type === 'INBOUND' ? '#3b82f6' : '#f97316'}` // blue-500 or orange-500
-  //   }),
-  //   // Mode Buttons
-  //   modeButton: (isActive: boolean, type: HistoryType): React.CSSProperties => {
-  //       const activeBg = type === 'INBOUND' ? '#3b82f6' : '#f97316';
-  //       const activeHover = type === 'INBOUND' ? '#2563eb' : '#ea580c';
-  //       const inactiveHover = type === 'INBOUND' ? '#eff6ff' : '#fff7ed';
-        
-  //       return {
-  //           padding: '10px 16px', 
-  //           borderRadius: '8px', 
-  //           fontWeight: '600', 
-  //           border: 'none',
-  //           cursor: 'pointer',
-  //           transition: 'all 0.15s ease-in-out',
-  //           backgroundColor: isActive ? activeBg : '#e5e7eb', // gray-200
-  //           color: isActive ? 'white' : '#4b5563', // gray-700
-  //           boxShadow: isActive ? '0 4px 6px -1px rgba(0, 0, 0, 0.1)' : 'none',
-  //           // Note: Inline styles don't support :hover, so we rely on parent event handlers for hover
-  //       }
-  //   },
-  //   // Search Area
-  //   searchContainer: { 
-  //       display: 'flex', 
-  //       gap: '12px', 
-  //       padding: '16px', 
-  //       border: '1px solid #d1d5db', 
-  //       borderRadius: '12px', 
-  //       marginBottom: '24px', 
-  //       alignItems: 'center',
-  //       backgroundColor: 'white',
-  //       boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-  //   } as const,
-  //   searchGroup: { 
-  //       display: 'flex', 
-  //       border: '1px solid #d1d5db', 
-  //       borderRadius: '8px', 
-  //       overflow: 'hidden', 
-  //       flexGrow: 1 
-  //   } as const,
-  //   searchSelect: { 
-  //       borderRight: '1px solid #d1d5db', 
-  //       padding: '10px', 
-  //       backgroundColor: '#f3f4f6', 
-  //       minWidth: '120px', 
-  //       outline: 'none', 
-  //       appearance: 'none' as const 
-  //   } as const,
-  //   searchInput: { 
-  //       padding: '10px', 
-  //       border: 'none', 
-  //       flexGrow: 1, 
-  //       outline: 'none', 
-  //       color: '#1f2937' // text-gray-800
-  //   } as const,
-  //   searchButton: { 
-  //       padding: '12px', 
-  //       border: 'none', 
-  //       backgroundColor: '#3b82f6', 
-  //       color: 'white', 
-  //       borderRadius: '9999px',
-  //       width: '48px', 
-  //       height: '48px', 
-  //       display: 'flex', 
-  //       alignItems: 'center', 
-  //       justifyContent: 'center', 
-  //       cursor: 'pointer',
-  //       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-  //       transition: 'background-color 0.15s ease-in-out',
-  //   },
-  //   // Data Table
-  //   tableContainer: { 
-  //       overflowX: 'auto', 
-  //       boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)', 
-  //       borderRadius: '12px' 
-  //   } as const,
-  //   table: { 
-  //       width: '100%', 
-  //       borderCollapse: 'collapse' as const, 
-  //       fontSize: '14px', 
-  //       backgroundColor: 'white', 
-  //       borderRadius: '12px' 
-  //   } as const,
-  //   th: (isFirst: boolean, isLast: boolean): React.CSSProperties => ({
-  //       padding: '12px', 
-  //       backgroundColor: '#f3f4f6', 
-  //       fontWeight: '600', 
-  //       textAlign: 'center' as const, 
-  //       border: '1px solid #e5e7eb', 
-  //       ...(isFirst && { borderTopLeftRadius: '12px' }),
-  //       ...(isLast && { borderTopRightRadius: '12px' }),
-  //       whiteSpace: 'nowrap'
-  //   }),
-  //   td: { 
-  //       padding: '12px', 
-  //       textAlign: 'center' as const, 
-  //       border: '1px solid #e5e7eb', 
-  //       transition: 'background-color 0.15s ease-in-out',
-  //       whiteSpace: 'nowrap'
-  //   },
-  //   tdHover: {
-  //       backgroundColor: '#eff6ff' // blue-50/50
-  //   },
-  //   // Actions & Badges
-  //   actionButton: (color: string): React.CSSProperties => ({
-  //       padding: '4px 8px', 
-  //       border: 'none', 
-  //       borderRadius: '6px', 
-  //       color: 'white', 
-  //       cursor: 'pointer', 
-  //       fontSize: '12px', 
-  //       transition: 'background-color 0.15s ease-in-out',
-  //       backgroundColor: color,
-  //       boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
-  //   }),
-  //   badge: (bg: string, text: string): React.CSSProperties => ({
-  //       padding: '2px 8px',
-  //       borderRadius: '9999px',
-  //       fontSize: '12px',
-  //       fontWeight: '600',
-  //       backgroundColor: bg,
-  //       color: text,
-  //       display: 'inline-block'
-  //   }),
-  //   excelButton: {
-  //       padding: '8px 16px', 
-  //       border: 'none', 
-  //       borderRadius: '8px', 
-  //       backgroundColor: '#10b981', // green-600
-  //       color: 'white', 
-  //       fontWeight: '600', 
-  //       cursor: 'pointer', 
-  //       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-  //       transition: 'background-color 0.15s ease-in-out',
-  //       display: 'flex', 
-  //       alignItems: 'center', 
-  //       gap: '8px',
-  //   },
-  //   // Pagination
-  //   paginationContainer: { 
-  //       display: 'flex', 
-  //       justifyContent: 'center' as const, 
-  //       marginTop: '24px', 
-  //       gap: '8px' 
-  //   } as const,
-  //   pageButton: (isActive: boolean): React.CSSProperties => ({
-  //       padding: '8px 12px',
-  //       border: '1px solid #d1d5db', 
-  //       borderRadius: '6px',
-  //       cursor: 'pointer',
-  //       transition: 'all 0.15s ease-in-out',
-  //       backgroundColor: isActive ? '#3b82f6' : 'white', // blue-500 or white
-  //       color: isActive ? 'white' : '#4b5563', // white or gray-700
-  //       fontWeight: isActive ? 'bold' : 'normal',
-  //       minWidth: '40px',
-  //       opacity: 1 // disabled handled by React's disabled prop
-  //   }),
-  // }), []);
-
 
   // --- 동적 설정 계산 (URL type에 의존) ---
   const { title, placeholder, searchOptions, dummyData } = useMemo(() => {
@@ -343,10 +173,19 @@ export default function App() {
   }, [totalPages]);
 
   // --- 액션 핸들러 (수정/삭제/문서 버튼) ---
-  const handleAction = useCallback((item: HistoryItem, action: string) => {
-    const docNo = (item as InboundItem).inboundNo || (item as OutboundItem).outboundNo;
-    console.log(`[${currentHistoryType === 'INBOUND' ? '입고' : '출고'}] No. ${docNo} 항목에 대해 "${action}" 액션 실행.`);
-  }, [currentHistoryType]);
+  const handleAction = (item: CombinedItem, actionType: string) => {
+    console.log(`${actionType} 버튼 클릭:`, item);
+
+    if (actionType === '작업 지시서' && 'inboundNo' in item) { // '작업 지시서' 버튼 클릭 시
+      navigate(`/work-order/${item.inboundNo}`); // ✨ 작업 지시서 페이지로 이동 (inboundNo 전달)
+    } else if (actionType === '출하증' && 'outboundNo' in item) { // '출하증' 버튼 클릭 시
+      navigate(`/shipping-certificate/${item.outboundNo}`); // ✨ 출하증 페이지로 이동 (outboundNo 전달)
+    } else {
+      // '수정' 또는 '삭제' 버튼에 대한 로직
+      // 예를 들어 모달을 띄우거나 다른 페이지로 이동
+      console.log(`${item.customerName}의 ${actionType}을(를) 처리합니다.`);
+    }
+  };
 
   // ----------------------------------------------------
   // 2. 모드 전환 버튼 핸들러 (navigate를 사용하여 URL 변경)
