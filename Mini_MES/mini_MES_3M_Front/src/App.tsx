@@ -5,6 +5,11 @@ import SalesHistoryQueryPage from './pages/SalesHistoryPage';
 import SalesItemInboundPage from './pages/SalesItemInboundPage';
 import SalesItemRegisterPage from './pages/SalesItemRegisterPage';
 import SalesItemOutboundPage from './pages/SalesItemOutboundPage';
+import RawItemInboundPage from './pages/RawItemInboundPage';
+import RawItemOutboundPage from './pages/RawItemOutboundPage';
+import SalesItemViewPage from './pages/SalesItemViewPage';
+import RawItemInventoryPage from './pages/RawsItemInventoryPage';
+import ProcessStatusPage from './pages/ProcessStatusPage';
 
 const App = () => {
   return (
@@ -23,6 +28,11 @@ const App = () => {
             <Route path="/order/item/register" element={<SalesItemRegisterPage />} />
             <Route path="/order/inbound/register" element={<SalesItemInboundPage />} />
             <Route path="/order/outbound/register" element={<SalesItemOutboundPage />} />
+            <Route path="/material/inbound/register" element={<RawItemInboundPage />} />
+            <Route path="/material/outbound/register" element={<RawItemOutboundPage />} />
+            <Route path="/order/item/history" element={<SalesItemViewPage />} />
+            <Route path="/material/item/history" element={<RawItemInventoryPage />} />
+            <Route path="/ProcessRegitster/Lotid" element={<ProcessStatusPage />} />
           </Routes>
         </div>
       </div>
