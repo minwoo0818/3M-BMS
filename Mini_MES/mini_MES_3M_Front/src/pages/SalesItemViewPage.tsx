@@ -115,7 +115,7 @@ const SalesItemViewPage: React.FC = () => {
         <table style={{ ...common.table, fontSize: '13px' }}>
           <thead>
             <tr>
-              <th style={{ ...common.th(true, false), width: '30px', padding: '10px' }}>No</th>
+              <th style={{ ...common.th(true, false), width: '30px', padding: '10px' }}>No.</th>
               <th style={{ ...common.th(true, false), width: '120px', padding: '10px' }}>거래처명</th>
               <th style={{ ...common.th(false, false), width: '120px', padding: '10px' }}>품목 번호</th>
               <th style={{ ...common.th(false, false), width: '140px', padding: '10px' }}>품목명</th>

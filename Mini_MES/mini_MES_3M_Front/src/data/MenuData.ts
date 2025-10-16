@@ -35,14 +35,14 @@ export const menuItems = [
         name: '원자재품목 입고', // 2 depth
         items: [
           { name: '원자재품목 입고 등록', path: '/raw/inbound/register' },
-          { name: '원자재품목 입고 이력조회', path: '/raw/inbound/history' },
+          { name: '원자재품목 입고 이력조회', path: '/raw/history/inbound' },
         ]
       },
       {
         name: '원자재품목 출고',
         items:[
             { name: '원자재품목 출고 등록', path: '/raw/outbound/register' },
-            { name: '원자재품목 출고 이력조회', path: '/raw/outbound/history' },
+            { name: '원자재품목 출고 이력조회', path: '/raw/history/outbound' },
         ]
       },
       { 
