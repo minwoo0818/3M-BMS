@@ -8,7 +8,7 @@ import type { MenuItem2Depth } from '../types/menu';
 // [스타일링]
 // (이전과 동일하게 인라인 스타일로 간단하게 처리하며, 실제 프로젝트에서는 CSSProperties 타입을 사용합니다.)
 const sidebarStyle: React.CSSProperties = {
-  width: '160px',
+  width: '220px',
   flexShrink: 0, 
   padding: '10px',
   backgroundColor: '#f8f8f8',

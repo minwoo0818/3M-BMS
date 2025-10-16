@@ -12,6 +12,11 @@ import PartnersList from "./pages/PartnersList";
 import PartnersDetail from "./pages/PartnersDetail";
 import RawItemReg from "./pages/RawItemReg";
 import RawsHistoryPage from "./pages/RawsHistoryPage"
+import RawItemInboundPage from "./pages/RawItemInboundPage";
+import RawItemOutboundPage from "./pages/RawItemOutboundPage";
+import SalesItemViewPage from "./pages/SalesItemViewPage";
+import RawItemInventoryPage from "./pages/RawsItemInventoryPage";
+import ProcessStatusPage from "./pages/ProcessStatusPage";
 
 const App = () => {
   return (
@@ -44,7 +49,6 @@ const App = () => {
             <Routes>
               {/* ... 페이지 라우트 설정 ... */}
               <Route path="/info/routing" element={<ProcessRegisterPage />} />
-
               <Route path="/info/partners/reg" element={<PartnersReg />} />
               <Route path="/info/partners/list" element={<PartnersList />} />
               <Route path="/info/partners/:id" element={<PartnersDetail />} />
@@ -80,8 +84,18 @@ const App = () => {
                 path="/raw/history/:type"
                 element={<RawsHistoryPage />}
               />
-            </Routes>
-          </div>
+            {/* ... 페이지 라우트 설정 ... */}
+            <Route path="/order/history/:type" element={<SalesHistoryQueryPage />} />
+            <Route path="/order/item/register" element={<SalesItemRegisterPage />} />
+            <Route path="/order/inbound/register" element={<SalesItemInboundPage />} />
+            <Route path="/order/outbound/register" element={<SalesItemOutboundPage />} />
+            <Route path="/raw/inbound/register" element={<RawItemInboundPage />} />
+            <Route path="/raw/outbound/register" element={<RawItemOutboundPage />} />
+            <Route path="/order/item/history" element={<SalesItemViewPage />} />
+            <Route path="/raw/stock/status" element={<RawItemInventoryPage />} />
+            <Route path="/ProcessRegitster/Lotid" element={<ProcessStatusPage />} />
+          </Routes>
+        </div>
         </div>
       </BrowserRouter>
     </>

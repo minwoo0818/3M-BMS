@@ -2,56 +2,58 @@ export const menuItems = [
   {
     title: "수주품목", // 1 depth
     items: [
-      {
-        name: "입고", // 2 depth (중간 항목)
+      { 
+        name: '수주품목 입고', // 2 depth (중간 항목)
         items: [
-          { name: "등록", path: "/order/inbound/register" }, // 3 depth (소항목)
-          { name: "이력조회", path: "/order/history/inbound" },
-        ],
+          { name: '수주품목 입고 등록', path: '/order/inbound/register' }, // 3 depth (소항목)
+          { name: '수주품목 입고 이력조회', path: '/order/history/inbound' },
+        ]
       },
-      {
-        name: "출고", // 2 depth
-        items: [
-          { name: "등록", path: "/order/outbound/register" },
-          { name: "이력조회", path: "/order/history/outbound" },
-        ],
+      { 
+        name: '공정진행현황', path: '/ProcessRegitster/Lotid' 
       },
-      {
-        name: "품목관리", // 2 depth
+      { 
+        name: '수주품목 출고', // 2 depth
         items: [
-          { name: "등록", path: "/order/item/register" },
-          { name: "조회", path: "/order/item/history" },
-        ],
+          { name: '수주품목 출고 등록', path: '/order/outbound/register' },
+          { name: '수주품목 출고 이력조회', path: '/order/history/outbound' },
+        ]
+      },
+      { 
+        name: '품목관리', // 2 depth
+        items: [
+          { name: '수주품목 등록', path: '/order/item/register' },
+          { name: '수주품목 조회', path: '/order/item/history' },
+        ]
       },
     ],
   },
   {
-    title: "원자재", // 1 depth
+    title: '원자재품목', // 1 depth
     items: [
-      {
-        name: "입고", // 2 depth
+      { 
+        name: '원자재품목 입고', // 2 depth
         items: [
-          { name: "입고 등록", path: "/raw/inbound/register" },
-          { name: "입고 이력조회", path: "/raw/history/inbound" },
-        ],
+          { name: '원자재품목 입고 등록', path: '/raw/inbound/register' },
+          { name: '원자재품목 입고 이력조회', path: '/raw/history/inbound' },
+        ]
       },
       {
-        name: "출고",
-        items: [
-          { name: "출고 등록", path: "/raw/outbound/register" },
-          { name: "출고 이력조회", path: "/raw/history/outbound" },
-        ],
+        name: '원자재품목 출고',
+        items:[
+            { name: '원자재품목 출고 등록', path: '/raw/outbound/register' },
+            { name: '원자재품목 출고 이력조회', path: '/raw/history/outbound' },
+        ]
       },
-      {
-        name: "재고현황",
-        path: "/raw/stock/status",
+      { 
+        name: '재고현황', path: '/raw/stock/status' 
       },
-      {
-        name: "품목관리", // 2 depth
+      { 
+        name: '품목관리', // 2 depth
         items: [
-          { name: "등록", path: "/raw/item/reg" },
-          { name: "조회", path: "/raw/item/list" },
-        ],
+          { name: '원자재품목 등록', path: '/raw/item/register' },
+          { name: '원자재품목 조회', path: '/raw/item/history' },
+        ]
       },
     ],
   },
@@ -62,8 +64,8 @@ export const menuItems = [
       {
         name: "거래처",
         items: [
-          { name: "등록", path: "/info/partners/reg" },
-          { name: "관리", path: "/info/partners/list" },
+          { name: "거래처 등록", path: "/info/partners/reg" },
+          { name: "거래처 관리", path: "/info/partners/list" },
         ],
       },
     ],
