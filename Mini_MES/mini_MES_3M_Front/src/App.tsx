@@ -10,6 +10,7 @@ import ShipmentCertificatePage from "./pages/ShipmentCertificatePage";
 import PartnersReg from "./pages/PartnersReg";
 import PartnersList from "./pages/PartnersList";
 import PartnersDetail from "./pages/PartnersDetail";
+import RawItemReg from "./pages/RawItemReg";
 
 const App = () => {
   return (
@@ -46,6 +47,7 @@ const App = () => {
               <Route path="/info/partners/reg" element={<PartnersReg />} />
               <Route path="/info/partners/list" element={<PartnersList />} />
               <Route path="/info/partners/:id" element={<PartnersDetail />} />
+              <Route path="/raw/item/reg" element={<RawItemReg />} />
               <Route
                 path="/order/history/:type"
                 element={<SalesHistoryQueryPage />}
