@@ -16,7 +16,7 @@ import { useNavigate } from "react-router-dom";
 const PartnersReg = () => {
   const [form, setForm] = useState({
     partnerType: "customer",
-    name: "",
+    partnerName: "",
     brNum: "",
     bossName: "",
     bossPhone: "",
@@ -101,7 +101,7 @@ const PartnersReg = () => {
         <TextField
           label="업체명"
           name="name"
-          value={form.name}
+          value={form.partnerName}
           onChange={handleChange}
         />
         <TextField

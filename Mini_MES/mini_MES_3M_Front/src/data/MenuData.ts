@@ -31,26 +31,26 @@ export const menuItems = [
       {
         name: "입고", // 2 depth
         items: [
-          { name: "입고 등록", path: "/material/inbound/register" },
-          { name: "입고 이력조회", path: "/material/inbound/history" },
+          { name: "입고 등록", path: "/raw/inbound/register" },
+          { name: "입고 이력조회", path: "/raw/inbound/history" },
         ],
       },
       {
         name: "출고",
         items: [
-          { name: "출고 등록", path: "/material/outbound/register" },
-          { name: "출고 이력조회", path: "/material/outbound/history" },
+          { name: "출고 등록", path: "/raw/outbound/register" },
+          { name: "출고 이력조회", path: "/raw/outbound/history" },
         ],
       },
       {
         name: "재고현황",
-        path: "/material/stock/status",
+        path: "/raw/stock/status",
       },
       {
         name: "품목관리", // 2 depth
         items: [
-          { name: "등록", path: "/material/item/register" },
-          { name: "조회", path: "/material/item/history" },
+          { name: "등록", path: "/raw/item/reg" },
+          { name: "조회", path: "/raw/item/list" },
         ],
       },
     ],
