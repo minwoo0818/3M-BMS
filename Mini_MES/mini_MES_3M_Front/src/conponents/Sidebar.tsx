@@ -96,7 +96,7 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div style={sidebarStyle}>
+    <div className="sidebar" style={sidebarStyle}>
       <h3 style={{ color: '#007bff', paddingBottom: '15px', borderBottom: '2px solid #007bff' }}>
         대원공업(주)
       </h3>
