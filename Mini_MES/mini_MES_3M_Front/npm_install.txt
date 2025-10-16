@@ -2,8 +2,10 @@ npm install react-dom
 
 npm install react-router-dom
 
-axios :  npm install axios
+npm install @mui/material
 
-npm install @mui/material @emotion/react @emotion/styled
+npm install @emotion/react @emotion/styled
 
 npm install @mui/x-data-grid
+
+npm install axios
