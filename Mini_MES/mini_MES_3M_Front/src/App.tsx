@@ -85,15 +85,23 @@ const App = () => {
                 element={<RawsHistoryPage />}
               />
             {/* ... 페이지 라우트 설정 ... */}
-            <Route path="/order/history/:type" element={<SalesHistoryQueryPage />} />
+
+            {/* 수주품목 등록 페이지 */}
             <Route path="/order/item/register" element={<SalesItemRegisterPage />} />
+            {/* 수주품목 입고 등록 페이지 */}
             <Route path="/order/inbound/register" element={<SalesItemInboundPage />} />
+            {/* 수주품목 출고 등록 페이지 */}
             <Route path="/order/outbound/register" element={<SalesItemOutboundPage />} />
+            {/* 원자재품목 입고 등록 페이지 */}
             <Route path="/raw/inbound/register" element={<RawItemInboundPage />} />
+            {/* 원자재품목 출고 등록 페이지 */}
             <Route path="/raw/outbound/register" element={<RawItemOutboundPage />} />
+            {/* 수주품목 조회 페이지 */}
             <Route path="/order/item/history" element={<SalesItemViewPage />} />
+            {/* 재고현황 페이지 */}
             <Route path="/raw/stock/status" element={<RawItemInventoryPage />} />
-            <Route path="/ProcessRegitster/Lotid" element={<ProcessStatusPage />} />
+            {/* 공정진행현황 페이지 */}
+            <Route path="/ProcessRegister/Lotid" element={<ProcessStatusPage />} />
           </Routes>
         </div>
         </div>
