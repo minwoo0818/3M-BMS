@@ -172,7 +172,7 @@ const RawItemDetail = () => {
             수정
           </Button>
           <Button variant="outlined" onClick={() => navigate("/raw/item/list")}>
-            목록
+            취소
           </Button>
         </Stack>
       </Stack>

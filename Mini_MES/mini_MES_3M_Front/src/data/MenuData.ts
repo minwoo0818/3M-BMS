@@ -23,8 +23,8 @@ export const menuItems = [
       {
         name: "품목관리", // 2 depth
         items: [
-          { name: "수주품목 등록", path: "/order/item/register" },
-          { name: "수주품목 조회", path: "/order/item/history" },
+          { name: "수주품목 등록", path: "/sales/item/register" },
+          { name: "수주품목 조회", path: "/sales/item/list" },
         ],
       },
     ],
@@ -53,7 +53,7 @@ export const menuItems = [
       {
         name: "품목관리", // 2 depth
         items: [
-          { name: "원자재품목 등록", path: "/raw/item/reg" },
+          { name: "원자재품목 등록", path: "/raw/item/register" },
           { name: "원자재품목 조회", path: "/raw/item/list" },
         ],
       },
