@@ -13,7 +13,7 @@ const INBOUND_SEARCH_OPTIONS: SearchOption[] = [
   { key: '전체', label: '전체' },
   { key: 'customerName', label: '거래처명' },
   { key: 'itemName', label: '품목명' },
-  { key: 'itemCode', label: '품목번호' },
+  { key: 'itemCode', label: '품목번호' }, 
   { key: 'inboundNo', label: '입고번호' },
   { key: 'date', label: '입고일자' },
 ];
@@ -238,12 +238,27 @@ export default function App() {
             onMouseLeave={() => setHoveredRow(null)}
         >
           <td style={{...styles.td, width: '5%'}}>{displayNo}</td>
+          {/* /입고 번호 */}
+
           
-          {/* 입고/출고 번호 */}
-          <td style={{...styles.td, width: '12%', fontWeight: '500'}}>
-            {currentHistoryType === 'INBOUND' ? (item as InboundItem).inboundNo : (item as OutboundItem).outboundNo}
+          {/* /출고 번호 */}
+            {currentHistoryType === 'INBOUND' ? (
+          <td
+            style={{
+              ...styles.td,
+              width: '12%',
+              fontWeight: '500',
+              color: '#2563eb',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+            }}
+            onClick={() => navigate(`/ProcessRegister/Lotid`)} // 클릭 시 이동
+          >
+            {(item as InboundItem).inboundNo}</td>) : (
+          <td style={{ ...styles.td, width: '12%',fontWeight: '500' }}>
+            {(item as OutboundItem).outboundNo}
           </td>
-          
+)}
           <td style={{...styles.td, width: '15%'}}>{item.customerName}</td>
           <td style={{...styles.td, width: '10%'}}>{item.itemCode}</td>
           <td style={{...styles.td, width: '15%', fontSize: '12px'}}>{item.itemName}</td>
