@@ -257,7 +257,7 @@ const RawItemList = () => {
                       color: "#3b82f6",
                       fontWeight: 600,
                     }}
-                    onClick={() => navigate(`/raw/item/list/${item.id}`)}
+                    onClick={() => navigate(`/raw/item/detail/${item.id}`)}
                   >
                     {item.itemName}
                   </td>

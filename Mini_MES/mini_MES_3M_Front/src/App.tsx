@@ -55,7 +55,7 @@ const App = () => {
               <Route path="/info/partners/reg" element={<PartnersReg />} />
               <Route path="/info/partners/list" element={<PartnersList />} />
               <Route path="/info/partners/:id" element={<PartnersDetail />} />
-              <Route path="/raw/item/reg" element={<RawItemReg />} />
+              <Route path="/raw/item/register" element={<RawItemReg />} />
               <Route path="/raw/item/list" element={<RawItemList />} />
               <Route path="/raw/item/detail/:id" element={<RawItemDetail />} />
               <Route
@@ -70,10 +70,7 @@ const App = () => {
                 path="/sales/item/register"
                 element={<SalesItemRegisterPage />}
               />
-              <Route
-                path="/sales/item/history"
-                element={<SalesItemViewPage />}
-              />
+              <Route path="/sales/item/list" element={<SalesItemViewPage />} />
               <Route
                 path="/order/inbound/register"
                 element={<SalesItemInboundPage />}
