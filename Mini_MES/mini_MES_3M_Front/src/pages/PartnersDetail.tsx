@@ -13,70 +13,77 @@ import {
 } from "@mui/material";
 
 import { useNavigate, useParams } from "react-router-dom";
+import { getPartnerDetails } from '../apis/partnersApi'; // API 함수 import
+import type { PartnerRegistrationData } from '../types/partner'; // 상세 조회 데이터 타입을 PartnerRegistrationData로 변경!
 
 // ====================================================================
-// 1. 데이터 구조 및 더미 데이터
-// ====================================================================
-
-interface PartnerData {
-  id: number;
-  partnerName: string; // 업체명
-  brNum: string; // 사업자등록번호
-  bossName: string; // 대표명
-  bossPhone: string; // 대표 전화번호
-  address: string; // 주소
-  representativeName: string; // 담당자 (부서, 직급)
-  representativePhone: string; // 담당자 연락처
-  representativeEmail: string; // 담당자 이메일
-  remark: string; // 비고
-  type: "customer" | "supplier"; // 거래처 종류
-  active: boolean; // 거래상태
-}
-
-const dummyData: PartnerData[] = [
-  {
-    id: 1,
-    partnerName: "코드하우스",
-    brNum: "123-456789",
-    bossName: "박준형",
-    bossPhone: "055-123-4567",
-    address: "경남 창원시 창원대로123",
-    representativeName: "영업부 부장 박준형",
-    representativePhone: "010-1234-5678",
-    representativeEmail: "jhpark@codehouse.com",
-    remark: "주요 고객사",
-    type: "customer",
-    active: true,
-  },
-  {
-    id: 2,
-    partnerName: "구트하우스",
-    brNum: "987-654321",
-    bossName: "김지훈",
-    bossPhone: "051-987-6543",
-    address: "경남 창원시 창원대로456",
-    representativeName: "품질관리 홍석민 대리",
-    representativePhone: "010-9876-5432",
-    representativeEmail: "jhkim@goothouse.com",
-    remark: "원자재 단가 협의 필요",
-    type: "supplier",
-    active: false,
-  },
-];
-
-// ====================================================================
-// 2. 상세 페이지 컴포넌트 (내부 전환형)
+// 상세 페이지 컴포넌트 (내부 전환형)
 // ====================================================================
 
 const PartnersDetail = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>(); // URL 파라미터는 항상 string
   const navigate = useNavigate();
-  const [partner, setPartner] = useState<PartnerData | null>(null);
+  const [partner, setPartner] = useState<PartnerRegistrationData | null>(null); // 타입 변경!
+  const [isLoading, setIsLoading] = useState(true); // 로딩 상태
+  const [error, setError] = useState<string | null>(null); // 에러 상태
 
   useEffect(() => {
-    const found = dummyData.find((p) => p.id === Number(id));
-    setPartner(found ?? null);
-  }, [id]);
+    // URL 파라미터로 받은 partnerId가 있는지 확인
+    if (id) {
+      const idNum = Number(id); // string을 number로 변환
+      if (isNaN(idNum)) { // 유효하지 않은 숫자일 경우
+        setError("유효하지 않은 거래처 ID입니다.");
+        setIsLoading(false);
+        return;
+      }
+
+      // API 호출 함수
+      const fetchDetail = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          const data = await getPartnerDetails(idNum); // API 호출
+          setPartner(data);
+        } catch (err: any) {
+          console.error('거래처 상세 정보를 불러오는데 실패했습니다:', err);
+          if (err.response && err.response.data && typeof err.response.data === 'object') {
+            const errorDetail = Object.values(err.response.data).join(', ');
+            setError(`상세 정보 로드 실패: ${errorDetail}`);
+          } else {
+            setError('거래처 상세 정보를 불러오는 중 오류가 발생했습니다.');
+          }
+          setPartner(null); // 에러 발생 시 데이터 초기화
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchDetail();
+    } else { // partnerId가 URL에 없는 경우
+      setError("거래처 ID가 제공되지 않았습니다.");
+      setIsLoading(false);
+    }
+  }, [id]); // partnerId가 변경될 때마다 재실행
+
+  if (isLoading) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography variant="h5">거래처 정보를 불러오는 중입니다...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography variant="h5" color="error">
+          {error}
+        </Typography>
+        <Button variant="contained" sx={{ mt: 2 }} onClick={() => navigate(-1)}>
+          목록으로
+        </Button>
+      </Box>
+    );
+  }
 
   if (!partner)
     return (
@@ -88,12 +95,13 @@ const PartnersDetail = () => {
       </Box>
     );
 
+  // 파트너 데이터가 정상적으로 로드되었을 때 UI 렌더링
   return (
     <Box
       sx={{
         display: "flex",
         justifyContent: "center",
-        alignItems: "flex-start", // 상단에서부터 카드 배치
+        alignItems: "flex-start",
         minHeight: "100vh",
         bgcolor: "#f9f9f9",
         padding: 4,
@@ -102,7 +110,7 @@ const PartnersDetail = () => {
       <Stack
         spacing={3}
         sx={{
-          width: 500, // 등록 페이지와 동일한 너비
+          width: 500,
           bgcolor: "#fff",
           p: 4,
           borderRadius: 2,
@@ -116,24 +124,26 @@ const PartnersDetail = () => {
         {/* 거래처 종류 */}
         <FormControl component="fieldset" fullWidth>
           <FormLabel>거래처 종류</FormLabel>
-          <RadioGroup row value={partner.type}>
+          <RadioGroup row value={partner.partnerType}> {/* partner.partnerType 그대로 사용 */}
             <FormControlLabel
               value="customer"
-              control={<Radio size="medium" readOnly />} // ✅ readOnly 설정
+              control={<Radio size="medium" readOnly />}
               label="수주품 거래처"
             />
             <FormControlLabel
               value="supplier"
-              control={<Radio size="medium" readOnly />} // ✅ readOnly 설정
+              control={<Radio size="medium" readOnly />}
               label="원자재 거래처"
             />
           </RadioGroup>
         </FormControl>
+        
+        {/* 거래상태 표시는 PartnerRegistrationData에 active 필드가 없으므로 제거! */}
 
         {/* ✅ 기본 정보 (반복문으로 읽기 전용 TextField 바인딩) */}
         {(
           [
-            "partnerName",
+            "name", // name 그대로 사용
             "brNum",
             "bossName",
             "bossPhone",
@@ -141,12 +151,12 @@ const PartnersDetail = () => {
             "representativeName",
             "representativePhone",
             "representativeEmail",
-          ] as (keyof PartnerData)[]
+          ] as (keyof Omit<PartnerRegistrationData, 'partnerType' | 'remark'>)[] // PartnerRegistrationData에서 제외 필드 명시
         ).map((key) => (
           <TextField
             key={key}
             label={
-              key === "partnerName"
+              key === "name"
                 ? "업체명"
                 : key === "brNum"
                 ? "사업자 등록번호"
@@ -165,13 +175,14 @@ const PartnersDetail = () => {
                 : ""
             }
             name={key as string}
-            value={partner[key]}
-            // ✅ InputProps를 합쳐서 readOnly와 스타일을 적용
+            value={partner[key] || ''}
             InputProps={{
               readOnly: true,
-              style: { fontSize: 16 }, // 텍스트 크기 조정
+              style: { fontSize: 16 },
             }}
             InputLabelProps={{ style: { fontSize: 16 } }}
+            multiline={key === "address"}
+            rows={key === "address" ? 2 : 1}
           />
         ))}
 
@@ -179,7 +190,7 @@ const PartnersDetail = () => {
         <TextField
           label="비고"
           name="remark"
-          value={partner.remark}
+          value={partner.remark || ''}
           multiline
           rows={2}
           InputProps={{
@@ -189,28 +200,11 @@ const PartnersDetail = () => {
           InputLabelProps={{ style: { fontSize: 16 } }}
         />
 
-        {/* 버튼 */}
-        <Stack
-          direction="row"
-          spacing={2}
-          justifyContent="flex-end"
-          sx={{ mt: 5 }}
-        >
-          <Button
-            variant="contained"
-            size="large"
-            sx={{ fontSize: 20, height: 50 }}
-          >
-            수정
-          </Button>
-
-          <Button
-            variant="contained"
-            size="large"
-            onClick={() => navigate("/info/partners/list")} // 목록 경로로 이동하도록 수
-            sx={{ fontSize: 20, height: 50 }}
-          >
-            취소
+        {/* 하단 버튼들 */}
+        <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Button variant="contained">수정</Button>
+          <Button variant="outlined" onClick={() => navigate(-1)}>
+            목록으로
           </Button>
         </Stack>
       </Stack>

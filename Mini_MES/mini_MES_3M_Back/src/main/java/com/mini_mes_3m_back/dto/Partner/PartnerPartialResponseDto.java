@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PartnerPartialResponseDto {
+    private Long partnerId;
     private String name; // 업체명
     private String brNum; // 사업자등록번호
     private String address; // 기업 주소 정보

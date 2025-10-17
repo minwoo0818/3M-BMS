@@ -139,7 +139,6 @@ export const useCommonStyles = () => {
       borderRadius: '12px'
     } as const,
 
-    // 여기 아래 두 가지가 새로 추가된 스타일이야!
     tableHeaderRow: {
       backgroundColor: '#e0e7ff', // 헤더 행 배경색을 좀 더 시원한 파란색 계열로 해봤어!
       borderBottom: '2px solid #a5b4fc', // 헤더 아래 경계선
@@ -149,10 +148,6 @@ export const useCommonStyles = () => {
       backgroundColor: 'white',
       borderBottom: '1px solid #f3f4f6', // 각 행의 구분선
       transition: 'background-color 0.2s ease-in-out',
-      // 참고: React 인라인 스타일에서는 ':hover'와 같은 가상 클래스를 직접 사용하기 어려워.
-      // 지금은 td에 hover 효과가 정의되어 있으니, td에 마우스를 올렸을 때만 배경색이 바뀔 거야.
-      // 만약 tr 전체에 hover를 적용하고 싶다면 onMouseEnter/onMouseLeave 이벤트를 사용해서 상태를 관리하거나
-      // styled-components 같은 css-in-js 라이브러리를 고려하는 게 좋아!
     } as const,
 
     th: (isFirst: boolean, isLast: boolean): React.CSSProperties => ({

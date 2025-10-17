@@ -1,7 +1,8 @@
+// src/main/java/com/mini_mes_3m_back/service/PartnerService.java
 package com.mini_mes_3m_back.service;
 
-import com.mini_mes_3m_back.dto.Partner.PartnerRegisterRequestDto; // 변경된 패키지와 DTO 이름 반영!
-import com.mini_mes_3m_back.dto.Partner.PartnerPartialResponseDto; // 변경된 패키지와 DTO 이름 반영!
+import com.mini_mes_3m_back.dto.Partner.PartnerRegisterRequestDto;
+import com.mini_mes_3m_back.dto.Partner.PartnerPartialResponseDto;
 import com.mini_mes_3m_back.entity.Partner;
 import com.mini_mes_3m_back.repository.PartnerRepository;
 import org.springframework.stereotype.Service;
@@ -19,9 +20,9 @@ public class PartnerService {
         this.partnerRepository = partnerRepository;
     }
 
-    // 거래처 등록
+    // 거래처 등록 (변동 없음)
     @Transactional
-    public PartnerRegisterRequestDto registerPartner(PartnerRegisterRequestDto request) { // DTO 이름 변경!
+    public PartnerRegisterRequestDto registerPartner(PartnerRegisterRequestDto request) {
         partnerRepository.findByName(request.getName()).ifPresent(partner -> {
             throw new IllegalArgumentException("이미 존재하는 업체명입니다: " + request.getName());
         });
@@ -40,7 +41,7 @@ public class PartnerService {
 
         Partner savedPartner = partnerRepository.save(newPartner);
 
-        return new PartnerRegisterRequestDto( // DTO 이름 변경!
+        return new PartnerRegisterRequestDto(
                 savedPartner.getPartnerType(),
                 savedPartner.getBrNum(),
                 savedPartner.getName(),
@@ -54,21 +55,20 @@ public class PartnerService {
         );
     }
 
-    // 모든 거래처 일부 조회 - partnerType 필터링 로직 재추가!
+    // 모든 거래처 일부 조회 - PartnerPartialResponseDto 필드 변경 반영
     @Transactional(readOnly = true)
-    public List<PartnerPartialResponseDto> getAllPartnersPartial(String partnerType) { // DTO 이름 및 인자 추가!
+    public List<PartnerPartialResponseDto> getAllPartnersPartial(String partnerType) {
         List<Partner> partners;
 
         if (partnerType != null && !partnerType.trim().isEmpty()) {
             partners = partnerRepository.findByPartnerType(partnerType);
         } else {
-            // partnerType이 제공되지 않으면 모든 거래처를 반환
-            // 아니면 여기서 "partnerType을 반드시 입력해야 합니다" 같은 예외를 던져도 좋아!
             partners = partnerRepository.findAll();
         }
 
         return partners.stream()
-                .map(partner -> new PartnerPartialResponseDto( // DTO 이름 변경!
+                .map(partner -> new PartnerPartialResponseDto(
+                        partner.getPartnerId(), // <-- Entity의 partnerId를 DTO에 포함!
                         partner.getName(),
                         partner.getBrNum(),
                         partner.getAddress(),
@@ -79,13 +79,13 @@ public class PartnerService {
                 .collect(Collectors.toList());
     }
 
-    // 특정 거래처 상세 조회
+    // 특정 거래처 상세 조회 (변동 없음)
     @Transactional(readOnly = true)
-    public PartnerRegisterRequestDto getPartnerDetailById(Long partnerId) { // DTO 이름 변경!
+    public PartnerRegisterRequestDto getPartnerDetailById(Long partnerId) {
         Partner partner = partnerRepository.findById(partnerId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 거래처입니다. ID: " + partnerId));
 
-        return new PartnerRegisterRequestDto( // DTO 이름 변경!
+        return new PartnerRegisterRequestDto(
                 partner.getPartnerType(),
                 partner.getBrNum(),
                 partner.getName(),
