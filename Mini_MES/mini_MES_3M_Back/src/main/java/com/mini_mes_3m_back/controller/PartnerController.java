@@ -1,16 +1,23 @@
+// src/main/java/com/mini_mes_3m_back/controller/PartnerController.java
 package com.mini_mes_3m_back.controller;
 
-import com.mini_mes_3m_back.dto.Partner.PartnerRegisterRequestDto; // 변경된 패키지와 DTO 이름 반영!
-import com.mini_mes_3m_back.dto.Partner.PartnerPartialResponseDto; // 변경된 패키지와 DTO 이름 반영!
+import com.mini_mes_3m_back.dto.Partner.PartnerRegisterRequestDto;
+import com.mini_mes_3m_back.dto.Partner.PartnerPartialResponseDto;
 import com.mini_mes_3m_back.service.PartnerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException; // 추가!
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.FieldError; // 추가!
 
+import jakarta.validation.Valid; // 추가!
+
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/info/partners")
+@RequestMapping("/partners")
 public class PartnerController {
 
     private final PartnerService partnerService;
@@ -21,31 +28,46 @@ public class PartnerController {
 
     // 거래처 등록 엔드포인트
     @PostMapping
-    public ResponseEntity<PartnerRegisterRequestDto> registerPartner(@RequestBody PartnerRegisterRequestDto request) { // DTO 이름 변경!
+    public ResponseEntity<PartnerRegisterRequestDto> registerPartner(
+            @Valid @RequestBody PartnerRegisterRequestDto request) { // <-- @Valid 추가!
         try {
-            PartnerRegisterRequestDto response = partnerService.registerPartner(request); // DTO 이름 변경!
+            PartnerRegisterRequestDto response = partnerService.registerPartner(request);
             return new ResponseEntity<>(response, HttpStatus.CREATED);
         } catch (IllegalArgumentException e) {
+            // Service 계층에서 발생한 비즈니스 로직 에러 (예: 중복 업체명) 처리
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // 모든 거래처 일부 조회 엔드포인트 - @RequestParam으로 partnerType 받기 재추가!
-    // GET 요청 예시: /api/partners?partnerType=customer 또는 /api/partners?partnerType=supplier
+    // DTO 유효성 검사 실패 시 예외 처리 핸들러 추가
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // HTTP 상태 코드를 400으로 설정
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach((error) -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
+        return errors; // 필드별 에러 메시지를 담은 Map을 반환
+    }
+
+
+    // 모든 거래처 일부 조회 엔드포인트
     @GetMapping
-    public ResponseEntity<List<PartnerPartialResponseDto>> getAllPartnersPartial( // DTO 이름 변경!
-                                                                                  @RequestParam(required = false) String partnerType) { // required = false로 선택적 파라미터 지정
-        List<PartnerPartialResponseDto> partners = partnerService.getAllPartnersPartial(partnerType); // DTO 이름 및 인자 전달!
+    public ResponseEntity<List<PartnerPartialResponseDto>> getAllPartnersPartial(
+            @RequestParam(required = false) String partnerType) {
+        List<PartnerPartialResponseDto> partners = partnerService.getAllPartnersPartial(partnerType);
         return ResponseEntity.ok(partners);
     }
 
     // 특정 거래처 상세 조회 엔드포인트
     @GetMapping("/{partnerId}")
-    public ResponseEntity<PartnerRegisterRequestDto> getPartnerDetailById(@PathVariable Long partnerId) { // DTO 이름 변경!
+    public ResponseEntity<PartnerRegisterRequestDto> getPartnerDetailById(@PathVariable Long partnerId) {
         try {
-            PartnerRegisterRequestDto partner = partnerService.getPartnerDetailById(partnerId); // DTO 이름 변경!
+            PartnerRegisterRequestDto partner = partnerService.getPartnerDetailById(partnerId);
             return ResponseEntity.ok(partner);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
