@@ -9,10 +9,10 @@ export const menuItems = [
           { name: "수주품목 입고 이력조회", path: "/order/history/inbound" },
         ],
       },
-      {
-        name: "공정진행현황",
-        path: "/ProcessRegitster/Lotid",
-      },
+      // {
+      //   name: "공정진행현황",
+      //   path: "/ProcessRegister/Lotid",
+      // },
       {
         name: "수주품목 출고", // 2 depth
         items: [
