@@ -83,11 +83,14 @@ const PartnersList: React.FC = () => {
   const navigate = useNavigate();
   const [partners, setPartners] = useState<PartnerData[]>(dummyData);
   const [tab, setTab] = useState<"customer" | "supplier">("customer");
-
   const [searchField, setSearchField] = useState<
     "total" | "partnerName" | "representativeName"
   >("total");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    pageSize: 5,
+    page: 0,
+  });
 
   const filteredPartners = partners.filter((p) => {
     if (p.type !== tab) return false;
@@ -131,7 +134,7 @@ const PartnersList: React.FC = () => {
             color: "primary.main",
           }}
           onClick={(e) => {
-            e.stopPropagation(); // ✅ 이게 핵심! 클릭 버블링 방지
+            e.stopPropagation();
             navigate(`/info/partners/${params.row.id}`);
           }}
         >
@@ -185,20 +188,13 @@ const PartnersList: React.FC = () => {
     },
   ];
 
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    pageSize: 5,
-    page: 0,
-  });
-
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h4" mb={2}>
         거래처 목록
       </Typography>
 
-      {/* 검색 필터 + 검색어 + 버튼 */}
       <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
-        {/* 검색필터 */}
         <FormControl sx={{ minWidth: 120 }}>
           <InputLabel sx={{ fontSize: 20, top: -6 }}>검색필터</InputLabel>
           <Select
@@ -221,7 +217,6 @@ const PartnersList: React.FC = () => {
           </Select>
         </FormControl>
 
-        {/* 검색어 입력 */}
         <TextField
           placeholder="업체명 혹은 담당자로 검색해주세요."
           value={searchKeyword}
@@ -246,7 +241,6 @@ const PartnersList: React.FC = () => {
           }}
         />
 
-        {/* 검색 버튼 */}
         <Button
           variant="contained"
           size="medium"
@@ -261,7 +255,6 @@ const PartnersList: React.FC = () => {
         </Button>
       </Stack>
 
-      {/* 탭 */}
       <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ mb: 2 }}>
         <Tab
           label={<Typography fontSize={20}>수주품 거래처</Typography>}
@@ -294,7 +287,7 @@ const PartnersList: React.FC = () => {
             justifyContent: "center",
           },
           "& .MuiTablePagination-root": {
-            fontSize: 20, // 원하는 크기로 변경 (예: 16px)
+            fontSize: 20,
           },
           width: 1530,
         }}

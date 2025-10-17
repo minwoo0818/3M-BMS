@@ -186,18 +186,21 @@ const RawItemReg = () => {
               ))}
           </Select>
         </FormControl>
-        <TextField
-          label="품목명"
-          name="itemName"
-          value={formData.itemName}
-          onChange={handleChange}
-        />
+
         <TextField
           label="품목번호"
           name="itemCode"
           value={formData.itemCode}
           onChange={handleChange}
         />
+
+        <TextField
+          label="품목명"
+          name="itemName"
+          value={formData.itemName}
+          onChange={handleChange}
+        />
+
         {/* 📌 4. 분류 (Select로 변경) */}
         <FormControl fullWidth required>
           <InputLabel id="classification-select-label">분류</InputLabel>
