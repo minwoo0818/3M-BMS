@@ -5,6 +5,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface SalesItemRepository extends JpaRepository<SalesItem, Long> {
     Page<SalesItem> findByItemNameContainingIgnoreCase(String itemName, Pageable pageable);
+
+    Optional<SalesItem> findByItemCode(String itemCode);
 }

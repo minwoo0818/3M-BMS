@@ -4,13 +4,14 @@ import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 
 @Entity
+// getters / setters
 @Table(name = "partners")
 public class Partner {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long partnerId;
 
     @Column(nullable=false, length=20)
-    private String partnerType;
+    private String partnerType; // customer | supplier
 
     @Column(nullable=false, length=50)
     private String name;
@@ -40,5 +41,4 @@ public class Partner {
         updatedAt = OffsetDateTime.now();
     }
 
-    // getters / setters
 }

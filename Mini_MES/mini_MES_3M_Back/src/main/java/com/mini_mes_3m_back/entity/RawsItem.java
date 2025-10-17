@@ -6,7 +6,8 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "raws_items")
 public class RawsItem {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long rawsItemId;
 
     private String itemCode;

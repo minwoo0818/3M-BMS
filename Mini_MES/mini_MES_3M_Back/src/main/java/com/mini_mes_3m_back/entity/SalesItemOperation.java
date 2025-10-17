@@ -6,7 +6,8 @@ import java.time.OffsetDateTime;
 @Entity
 @Table(name = "sales_item_operations")
 public class SalesItemOperation {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long itemOperationId;
 
     @ManyToOne(optional=false)

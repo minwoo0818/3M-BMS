@@ -4,6 +4,7 @@ import jakarta.persistence.*;
         import java.time.OffsetDateTime;
 
 @Entity
+// getters / setters
 @Table(name = "operations")
 public class Operations {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,6 +20,7 @@ public class Operations {
     private String description;
 
     private Integer standardTime;
+
     private OffsetDateTime createdAt;
 
     @PrePersist
