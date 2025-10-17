@@ -1,10 +1,14 @@
 package com.mini_mes_3m_back.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.OffsetDateTime;
 
 @Entity
-// getters / setters
+@Getter
+@Setter
 @Table(name = "partners")
 public class Partner {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
