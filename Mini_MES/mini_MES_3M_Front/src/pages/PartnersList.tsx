@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useCommonStyles } from '../style/useCommonStyles'; 
 import { useNavigate } from "react-router-dom";
 import type { PartnerListRowData, SearchField } from '../types/partner'; // PartnerListRowData 사용!
-import { getPartnersPartial } from '../apis/partnersApi'; // API 함수 import
+import { getPartnersPartial, updatePartnerStatus } from '../apis/partnersApi'; // API 함수 import
 
 const ITEMS_PER_PAGE = 5; // 페이지당 항목 수
 
@@ -46,14 +46,37 @@ const PartnersList: React.FC = () => {
     fetchPartners(tab);
   }, [tab, fetchPartners]);
 
-  // 거래 상태 토글 핸들러 (현재는 프론트엔드 상태만 변경. 실제로는 백엔드 API 호출 필요)
-  const togglePartnerStatus = useCallback((targetPartnerId: number) => { // partnerId 사용
-    // TODO: 백엔드에 PUT/PATCH 요청을 보내서 실제 DB를 업데이트하는 로직 추가 필요
-    // 예: updatePartnerStatus(targetPartnerId, !currentStatus);
-    setPartners((prev) =>
-      prev.map((p) => (p.partnerId === targetPartnerId ? { ...p, active: !p.active } : p))
-    );
-  }, []);
+  // 거래 상태 토글 핸들러 
+  const togglePartnerStatus = useCallback(async (targetPartnerId: number) => {
+    // 1. 현재 파트너 목록에서 해당 파트너의 현재 active 상태를 찾습니다.
+    const partnerToUpdate = partners.find(p => p.partnerId === targetPartnerId);
+    if (!partnerToUpdate) {
+        console.error('업데이트할 거래처를 찾을 수 없습니다. ID:', targetPartnerId);
+        alert('거래처 정보를 찾을 수 없습니다.');
+        return;
+    }
+    const currentStatus = partnerToUpdate.active; // 현재 상태
+
+    try {
+        // 2. 백엔드 API를 호출하여 상태를 업데이트합니다.
+        const updatedBackendPartner = await updatePartnerStatus(targetPartnerId, !currentStatus);
+
+        // 3. 백엔드에서 받은 최신 정보로 프론트엔드 상태를 업데이트합니다.
+        setPartners((prev) =>
+            prev.map((p) => (p.partnerId === targetPartnerId ? { ...p, active: updatedBackendPartner.active } : p))
+        );
+        alert(`거래처 "${updatedBackendPartner.name}"의 상태가 ${updatedBackendPartner.active ? "거래 중" : "거래 중지"}로 변경되었습니다.`);
+    } catch (err: any) {
+        console.error('거래처 상태 업데이트 실패:', err);
+        // 에러 메시지 상세화
+        if (err.response && err.response.data && typeof err.response.data === 'object') {
+            const errorDetail = Object.values(err.response.data).join(', ');
+            alert(`상태 변경 실패: ${errorDetail}`);
+        } else {
+            alert("거래처 상태 변경 중 오류가 발생했습니다.");
+        }
+    }
+  }, [partners]); // partners 상태에 의존하므로 partners를 의존성 배열에 추가
   
   // 검색 및 필터링 로직 (프론트엔드에서 검색하는 로직은 유지)
   const applySearchAndFilter = useCallback(() => {
@@ -168,7 +191,7 @@ const PartnersList: React.FC = () => {
                 <td style={{ ...styles.td, width: '15%', ...styles.tdCenter }}>
                     <button
                         style={styles.actionButton(partner.active ? '#ed6c02' : '#2e7d32')} 
-                        onClick={() => togglePartnerStatus(partner.partnerId)} // partnerId 사용
+                        onClick={() => togglePartnerStatus(partner.partnerId)} // partner.partnerId를 넘김!
                     >
                         {partner.active ? "거래종료" : "거래재개"}
                     </button>

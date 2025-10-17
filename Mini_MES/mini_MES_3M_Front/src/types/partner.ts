@@ -41,3 +41,7 @@ export interface PartnerListRowData {
 
 // 검색 필드 타입 정의
 export type SearchField = "total" | "name" | "representativeName";
+
+export interface PartnerUpdateStatusRequestDto {
+  active: boolean; // 변경할 거래 상태 (true 또는 false)
+}

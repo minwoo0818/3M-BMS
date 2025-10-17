@@ -3,6 +3,7 @@ package com.mini_mes_3m_back.controller;
 
 import com.mini_mes_3m_back.dto.Partner.PartnerRegisterRequestDto;
 import com.mini_mes_3m_back.dto.Partner.PartnerPartialResponseDto;
+import com.mini_mes_3m_back.dto.Partner.PartnerUpdateStatusRequestDto;
 import com.mini_mes_3m_back.service.PartnerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -71,6 +72,23 @@ public class PartnerController {
             return ResponseEntity.ok(partner);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // 거래처 상태 (active) 업데이트 엔드포인트 추가
+    // PUT 또는 PATCH를 사용할 수 있으며, 부분 업데이트이므로 PATCH가 더 의미론적입니다.
+    @PatchMapping("/{partnerId}/status")
+    public ResponseEntity<PartnerPartialResponseDto> updatePartnerStatus(
+            @PathVariable Long partnerId,
+            @Valid @RequestBody PartnerUpdateStatusRequestDto request) { // DTO 유효성 검사
+        try {
+            PartnerPartialResponseDto updatedPartner = partnerService.updatePartnerStatus(partnerId, request.getActive());
+            return ResponseEntity.ok(updatedPartner); // 200 OK와 함께 업데이트된 정보 반환
+        } catch (IllegalArgumentException e) {
+            // 존재하지 않는 거래처 ID이거나 다른 비즈니스 로직 에러
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND); // 404 Not Found
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

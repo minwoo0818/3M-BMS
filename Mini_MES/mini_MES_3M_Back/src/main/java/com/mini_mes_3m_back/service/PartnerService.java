@@ -98,4 +98,30 @@ public class PartnerService {
                 partner.getRemark()
         );
     }
+
+    // 거래처 상태 (active) 업데이트 메서드 추가
+    @Transactional
+    public PartnerPartialResponseDto updatePartnerStatus(Long partnerId, Boolean newStatus) {
+        // 1. 해당 ID의 거래처를 찾습니다. 없으면 예외 발생
+        Partner partner = partnerRepository.findById(partnerId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 거래처입니다. ID: " + partnerId));
+
+        // 2. 새로운 상태 값으로 업데이트합니다.
+        partner.setActive(newStatus);
+
+        // 3. 변경된 엔티티를 저장하고, 업데이트된 DTO를 반환합니다.
+        // @PreUpdate에 의해 updatedAt이 자동으로 업데이트됩니다.
+        Partner updatedPartner = partnerRepository.save(partner); // save()를 호출하면 Entity가 Persist 상태이므로 자동으로 업데이트 반영
+
+        // 업데이트된 엔티티를 프론트엔드에 필요한 DTO로 변환하여 반환
+        return new PartnerPartialResponseDto(
+                updatedPartner.getPartnerId(),
+                updatedPartner.getName(),
+                updatedPartner.getBrNum(),
+                updatedPartner.getAddress(),
+                updatedPartner.getRepresentativeName(),
+                updatedPartner.getRepresentativePhone(),
+                updatedPartner.getActive()
+        );
+    }
 }

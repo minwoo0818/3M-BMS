@@ -1,6 +1,6 @@
 // src/api/partnersApi.ts
 import axios from 'axios';
-import type { PartnerRegistrationData, PartnerPartialDataDto, PartnerListRowData } from '../types/partner'; // PartnerDetailData는 이제 필요 없어요!
+import type { PartnerRegistrationData, PartnerPartialDataDto, PartnerListRowData, PartnerUpdateStatusRequestDto } from '../types/partner'; // PartnerDetailData는 이제 필요 없어요!
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -45,4 +45,10 @@ export const getPartnerDetails = async (partnerId: number): Promise<PartnerRegis
   // 백엔드의 /partners/{partnerId}/detail 엔드포인트는 PartnerRegisterRequestDto (PartnerRegistrationData와 동일)를 반환함!
   const response = await api.get<PartnerRegistrationData>(`/partners/${partnerId}`);
   return response.data; // 백엔드에서 주는 데이터를 그대로 반환
+};
+
+export const updatePartnerStatus = async (partnerId: number, newStatus: boolean): Promise<PartnerPartialDataDto> => {
+  const requestBody: PartnerUpdateStatusRequestDto = { active: newStatus };
+  const response = await api.patch<PartnerPartialDataDto>(`/partners/${partnerId}/status`, requestBody);
+  return response.data;
 };
