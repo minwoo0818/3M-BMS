@@ -37,7 +37,7 @@ public class SalesItem {
     private Boolean active = true;
     private OffsetDateTime createdAt;
 
-    @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SalesItemOperation> operations;
 
     @PrePersist public void prePersist(){ createdAt = OffsetDateTime.now(); }

@@ -1,16 +1,21 @@
 package com.mini_mes_3m_back.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.OffsetDateTime;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "partners")
 public class Partner {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long partnerId;
 
     @Column(nullable=false, length=20)
-    private String partnerType;
+    private String partnerType; // customer | supplier
 
     @Column(nullable=false, length=50)
     private String name;
@@ -40,5 +45,4 @@ public class Partner {
         updatedAt = OffsetDateTime.now();
     }
 
-    // getters / setters
 }
