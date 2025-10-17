@@ -1,9 +1,7 @@
 // src/main/java/com/mini_mes_3m_back/controller/PartnerController.java
 package com.mini_mes_3m_back.controller;
 
-import com.mini_mes_3m_back.dto.Partner.PartnerRegisterRequestDto;
-import com.mini_mes_3m_back.dto.Partner.PartnerPartialResponseDto;
-import com.mini_mes_3m_back.dto.Partner.PartnerUpdateStatusRequestDto;
+import com.mini_mes_3m_back.dto.Partner.*;
 import com.mini_mes_3m_back.service.PartnerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,11 +62,11 @@ public class PartnerController {
         return ResponseEntity.ok(partners);
     }
 
-    // 특정 거래처 상세 조회 엔드포인트
-    @GetMapping("/{partnerId}")
-    public ResponseEntity<PartnerRegisterRequestDto> getPartnerDetailById(@PathVariable Long partnerId) {
+    // 특정 거래처 상세 조회 - 반환 DTO를 PartnerDetailResponseDto로 변경!
+    @GetMapping("/{partnerId}/detail")
+    public ResponseEntity<PartnerDetailResponseDto> getPartnerDetailById(@PathVariable Long partnerId) { // 반환 타입 변경
         try {
-            PartnerRegisterRequestDto partner = partnerService.getPartnerDetailById(partnerId);
+            PartnerDetailResponseDto partner = partnerService.getPartnerDetailById(partnerId); // 서비스 호출도 변경
             return ResponseEntity.ok(partner);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
@@ -93,4 +91,20 @@ public class PartnerController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    // 거래처 상세 정보 업데이트 엔드포인트 - 요청 DTO: PartnerDetailUpdateRequestDto, 반환 DTO: PartnerDetailResponseDto
+    @PutMapping("/{partnerId}")
+    public ResponseEntity<PartnerDetailResponseDto> updatePartner( // 반환 타입 변경!
+                                                                   @PathVariable Long partnerId, // PathVariable로 partnerId 받음
+                                                                   @Valid @RequestBody PartnerDetailUpdateRequestDto request) { // 요청 DTO 타입 변경!
+        try {
+            PartnerDetailResponseDto updatedPartner = partnerService.updatePartner(partnerId, request); // 서비스 호출 시 PathVariable의 partnerId와 request를 함께 넘김
+            return ResponseEntity.ok(updatedPartner);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }
