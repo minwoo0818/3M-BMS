@@ -1,9 +1,13 @@
 package com.mini_mes_3m_back.entity;
 
 import jakarta.persistence.*;
-        import java.time.OffsetDateTime;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.time.OffsetDateTime;
 
 @Entity
+@Getter @Setter
 // getters / setters
 @Table(name = "operations")
 public class Operations {
