@@ -16,7 +16,7 @@ public class SalesItemOperation {
 
     @ManyToOne(optional=false)
     @JoinColumn(name="operation_id")
-    private Operations operation;
+    private Operation operation;
 
     @Column(nullable=false)
     private Integer seq;
