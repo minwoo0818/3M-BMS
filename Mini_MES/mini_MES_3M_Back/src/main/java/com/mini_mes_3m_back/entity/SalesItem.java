@@ -1,10 +1,17 @@
 package com.mini_mes_3m_back.entity;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.OffsetDateTime;
 import java.util.List;
 
 @Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "sales_items")
 public class SalesItem {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,6 +47,8 @@ public class SalesItem {
     @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SalesItemOperation> operations;
 
+
     @PrePersist public void prePersist(){ createdAt = OffsetDateTime.now(); }
-    // getters / setters
+
+
 }
