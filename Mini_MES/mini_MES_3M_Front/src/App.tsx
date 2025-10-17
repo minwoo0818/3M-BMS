@@ -19,6 +19,7 @@ import RawItemInventoryPage from "./pages/RawsItemInventoryPage";
 import ProcessStatusPage from "./pages/ProcessStatusPage";
 import RawItemList from "./pages/RawItemList";
 import RawItemDetail from "./pages/RawItemDetail";
+import SalesItemDetailPage from "./pages/SalesItemDetailPage";
 
 const App = () => {
   return (
@@ -56,14 +57,22 @@ const App = () => {
               <Route path="/info/partners/:id" element={<PartnersDetail />} />
               <Route path="/raw/item/reg" element={<RawItemReg />} />
               <Route path="/raw/item/list" element={<RawItemList />} />
-              <Route path="/raw/item/list/:id" element={<RawItemDetail />} />
+              <Route path="/raw/item/detail/:id" element={<RawItemDetail />} />
+              <Route
+                path="/sales/item/detail/:id"
+                element={<SalesItemDetailPage />}
+              />
               <Route
                 path="/order/history/:type"
                 element={<SalesHistoryQueryPage />}
               />
               <Route
-                path="/order/item/register"
+                path="/sales/item/register"
                 element={<SalesItemRegisterPage />}
+              />
+              <Route
+                path="/sales/item/history"
+                element={<SalesItemViewPage />}
               />
               <Route
                 path="/order/inbound/register"
@@ -85,23 +94,8 @@ const App = () => {
               />
               {/* 원자재 입고 이력조회 */}
               <Route path="/raw/history/:type" element={<RawsHistoryPage />} />
+
               {/* ... 페이지 라우트 설정 ... */}
-              <Route
-                path="/order/history/:type"
-                element={<SalesHistoryQueryPage />}
-              />
-              <Route
-                path="/order/item/register"
-                element={<SalesItemRegisterPage />}
-              />
-              <Route
-                path="/order/inbound/register"
-                element={<SalesItemInboundPage />}
-              />
-              <Route
-                path="/order/outbound/register"
-                element={<SalesItemOutboundPage />}
-              />
               <Route
                 path="/raw/inbound/register"
                 element={<RawItemInboundPage />}
@@ -110,10 +104,7 @@ const App = () => {
                 path="/raw/outbound/register"
                 element={<RawItemOutboundPage />}
               />
-              <Route
-                path="/order/item/history"
-                element={<SalesItemViewPage />}
-              />
+
               <Route
                 path="/raw/stock/status"
                 element={<RawItemInventoryPage />}

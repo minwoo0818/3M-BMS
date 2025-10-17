@@ -1,54 +1,61 @@
-import React, { useState } from 'react';
-import { useCommonStyles } from '../style/useCommonStyles';
-import { useProcessStyles } from '../style/useProcessStyles';
-import { useSalesHistoryStyles } from '../style/useSalesHistoryStyles';
+import React, { useState } from "react";
+import { useCommonStyles } from "../style/useCommonStyles";
+import { useProcessStyles } from "../style/useProcessStyles";
+import { useSalesHistoryStyles } from "../style/useSalesHistoryStyles";
+import { useNavigate } from "react-router-dom";
 
 const SalesItemViewPage: React.FC = () => {
+  const navigate = useNavigate();
   const common = useCommonStyles();
   const process = useProcessStyles();
   const history = useSalesHistoryStyles();
 
-  const [searchType, setSearchType] = useState('전체');
-  const [searchKeyword, setSearchKeyword] = useState('');
+  const [searchType, setSearchType] = useState("전체");
+  const [searchKeyword, setSearchKeyword] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const data = [
     {
       id: 1,
-      partnerName: '코드하우스',
-      itemCode: 'Code-001',
-      itemName: '핀걸이 스프링',
-      classification: '방산',
-      price: '1,000원',
-      coating_method: '분체도장',
-      remark: '고객 요청사항 있음',
-      ACTIVE: 'Y', // 거래 중
+      partnerName: "코드하우스",
+      itemCode: "Code-001",
+      itemName: "핀걸이 스프링",
+      classification: "방산",
+      price: "1,000원",
+      coating_method: "분체도장",
+      remark: "고객 요청사항 있음",
+      ACTIVE: "Y", // 거래 중
     },
     {
       id: 2,
-      partnerName: '창원금속',
-      itemCode: 'Code-002',
-      itemName: '와셔',
-      classification: '기계',
-      price: '500원',
-      coating_method: '도금',
-      remark: '정상 거래 중지됨',
-      ACTIVE: 'N', // 거래 중지
+      partnerName: "창원금속",
+      itemCode: "Code-002",
+      itemName: "와셔",
+      classification: "기계",
+      price: "500원",
+      coating_method: "도금",
+      remark: "정상 거래 중지됨",
+      ACTIVE: "N", // 거래 중지
     },
   ];
 
   const handleSearch = () => {
-    console.log('검색:', searchType, searchKeyword);
+    console.log("검색:", searchType, searchKeyword);
   };
 
   const handleExcelDownload = () => {
-    console.log('엑셀 다운로드');
+    console.log("엑셀 다운로드");
   };
 
   const handleToggleStatus = (itemCode: string, current: string) => {
-    const next = current === 'Y' ? 'N' : 'Y';
+    const next = current === "Y" ? "N" : "Y";
     console.log(`거래 상태 변경: ${itemCode} (${current} → ${next})`);
     // 실제로 상태를 변경하려면 setState로 data 업데이트 로직 추가 가능
+  };
+
+  // ⭐️ 상세 페이지로 이동하는 함수 추가
+  const handleItemClick = (id: number) => {
+    navigate(`/sales/item/detail/${id}`);
   };
 
   return (
@@ -58,7 +65,13 @@ const SalesItemViewPage: React.FC = () => {
       {/* 검색 영역 */}
       <div style={common.searchContainer}>
         <div style={common.searchGroup}>
-          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+          <div
+            style={{
+              position: "relative",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
@@ -73,11 +86,11 @@ const SalesItemViewPage: React.FC = () => {
             </select>
             <span
               style={{
-                position: 'absolute',
-                right: '10px',
-                pointerEvents: 'none',
-                fontSize: '12px',
-                color: '#6b7280',
+                position: "absolute",
+                right: "10px",
+                pointerEvents: "none",
+                fontSize: "12px",
+                color: "#6b7280",
               }}
             >
               ▼
@@ -92,9 +105,13 @@ const SalesItemViewPage: React.FC = () => {
           />
         </div>
         {/* 돋보기 검색 버튼 */}
-        <button type="submit" style={common.searchButton} onClick={handleSearch}>
+        <button
+          type="submit"
+          style={common.searchButton}
+          onClick={handleSearch}
+        >
           <svg
-            style={{ width: '20px', height: '20px' }}
+            style={{ width: "20px", height: "20px" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -112,64 +129,175 @@ const SalesItemViewPage: React.FC = () => {
 
       {/* 테이블 영역 */}
       <div style={common.tableContainer}>
-        <table style={{ ...common.table, fontSize: '13px' }}>
+        <table style={{ ...common.table, fontSize: "13px" }}>
           <thead>
             <tr>
-              <th style={{ ...common.th(true, false), width: '30px', padding: '10px' }}>No.</th>
-              <th style={{ ...common.th(true, false), width: '120px', padding: '10px' }}>거래처명</th>
-              <th style={{ ...common.th(false, false), width: '120px', padding: '10px' }}>품목 번호</th>
-              <th style={{ ...common.th(false, false), width: '140px', padding: '10px' }}>품목명</th>
-              <th style={{ ...common.th(false, false), width: '90px', padding: '10px' }}>분류</th>
-              <th style={{ ...common.th(true, false), width: '120px', padding: '10px' }}>단가(개 당)</th>
-              <th style={{ ...common.th(true, false), width: '120px', padding: '10px' }}>도장방식</th>
-              <th style={{ ...common.th(false, false), width: '250px', padding: '10px' }}>비고</th>
-              <th style={{ ...common.th(false, false), width: '250px', padding: '10px' }}>거래현황</th>
+              <th
+                style={{
+                  ...common.th(true, false),
+                  width: "30px",
+                  padding: "10px",
+                }}
+              >
+                No.
+              </th>
+              <th
+                style={{
+                  ...common.th(true, false),
+                  width: "120px",
+                  padding: "10px",
+                }}
+              >
+                거래처명
+              </th>
+              <th
+                style={{
+                  ...common.th(false, false),
+                  width: "120px",
+                  padding: "10px",
+                }}
+              >
+                품목 번호
+              </th>
+              <th
+                style={{
+                  ...common.th(false, false),
+                  width: "140px",
+                  padding: "10px",
+                }}
+              >
+                품목명
+              </th>
+              <th
+                style={{
+                  ...common.th(false, false),
+                  width: "90px",
+                  padding: "10px",
+                }}
+              >
+                분류
+              </th>
+              <th
+                style={{
+                  ...common.th(true, false),
+                  width: "120px",
+                  padding: "10px",
+                }}
+              >
+                단가(개 당)
+              </th>
+              <th
+                style={{
+                  ...common.th(true, false),
+                  width: "120px",
+                  padding: "10px",
+                }}
+              >
+                도장방식
+              </th>
+              <th
+                style={{
+                  ...common.th(false, false),
+                  width: "250px",
+                  padding: "10px",
+                }}
+              >
+                비고
+              </th>
+              <th
+                style={{
+                  ...common.th(false, false),
+                  width: "250px",
+                  padding: "10px",
+                }}
+              >
+                거래현황
+              </th>
             </tr>
           </thead>
 
           <tbody>
             {data.map((row, idx) => (
               <tr key={idx}>
-                <td style={{ ...common.td, width: '50px', padding: '8px' }}>{row.id}</td>
-                <td style={{ ...common.td, width: '120px', padding: '8px' }}>{row.partnerName}</td>
-                <td style={{ ...common.td, width: '120px', padding: '8px' }}>{row.itemCode}</td>
-                <td style={{ ...common.td, width: '140px', padding: '8px' }}>{row.itemName}</td>
-                <td style={{ ...common.td, width: '90px', padding: '8px' }}>{row.classification}</td>
-                <td style={{ ...common.td, width: '120px', padding: '8px' }}>{row.price}</td>
-                <td style={{ ...common.td, width: '120px', padding: '8px' }}>{row.coating_method}</td>
-                <td style={{ ...common.td, width: '250px', padding: '8px' }}>{row.remark}</td>
+                <td style={{ ...common.td, width: "50px", padding: "8px" }}>
+                  {row.id}
+                </td>
+                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
+                  {row.partnerName}
+                </td>
+                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
+                  {row.itemCode}
+                </td>
+                {/* ⭐️ 품목명에 클릭 이벤트 적용 */}
+                <td
+                  style={{
+                    ...common.td,
+                    width: "140px",
+                    padding: "8px",
+                    cursor: "pointer", // 마우스 커서를 포인터로 변경
+                    color: "#2563eb", // 링크처럼 파란색으로 변경
+                    fontWeight: "bold", // 굵게 표시
+                    textDecoration: "underline", // 밑줄 추가
+                  }}
+                  onClick={() => handleItemClick(row.id)} // 클릭 시 상세 페이지로 이동
+                >
+                  {row.itemName}
+                </td>
+                <td style={{ ...common.td, width: "90px", padding: "8px" }}>
+                  {row.classification}
+                </td>
+                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
+                  {row.price}
+                </td>
+                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
+                  {row.coating_method}
+                </td>
+                <td style={{ ...common.td, width: "250px", padding: "8px" }}>
+                  {row.remark}
+                </td>
 
                 {/* ✅ 거래현황 버튼 */}
-                <td style={{ ...common.td, width: '250px', padding: '8px', textAlign: 'center' }}>
-                  {row.ACTIVE === 'Y' ? (
+                <td
+                  style={{
+                    ...common.td,
+                    width: "250px",
+                    padding: "8px",
+                    textAlign: "center",
+                  }}
+                >
+                  {row.ACTIVE === "Y" ? (
                     <button
                       style={{
-                        ...common.actionButton('#ef4444'),
-                        backgroundColor: 'white',
-                        color: '#ef4444',
-                        border: '1px solid #ef4444',
-                        fontSize: '13px',
-                        padding: '6px 10px',
-                        height: '32px',
-                        minWidth: '90px',
+                        ...common.actionButton("#ef4444"),
+                        backgroundColor: "white",
+                        color: "#ef4444",
+                        border: "1px solid #ef4444",
+                        fontSize: "13px",
+                        padding: "6px 10px",
+                        height: "32px",
+                        minWidth: "90px",
                       }}
-                      onClick={() => handleToggleStatus(row.itemCode, row.ACTIVE)}
+                      onClick={() =>
+                        handleToggleStatus(row.itemCode, row.ACTIVE)
+                      }
                     >
                       거래종료
                     </button>
                   ) : (
                     <button
                       style={{
-                        ...common.actionButton('#22c55e'),
-                        backgroundColor: 'white',
-                        color: '#22c55e',
-                        border: '1px solid #22c55e',
-                        fontSize: '13px',
-                        padding: '6px 10px',
-                        height: '32px',
-                        minWidth: '90px',
+                        ...common.actionButton("#22c55e"),
+                        backgroundColor: "white",
+                        color: "#22c55e",
+                        border: "1px solid #22c55e",
+                        fontSize: "13px",
+                        padding: "6px 10px",
+                        height: "32px",
+                        minWidth: "90px",
                       }}
-                      onClick={() => handleToggleStatus(row.itemCode, row.ACTIVE)}
+                      onClick={() =>
+                        handleToggleStatus(row.itemCode, row.ACTIVE)
+                      }
                     >
                       거래재개
                     </button>
@@ -182,7 +310,13 @@ const SalesItemViewPage: React.FC = () => {
       </div>
 
       {/* 엑셀 다운로드 버튼 */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: "20px",
+        }}
+      >
         <button style={history.excelButton} onClick={handleExcelDownload}>
           📥 EXCEL 다운로드
         </button>
