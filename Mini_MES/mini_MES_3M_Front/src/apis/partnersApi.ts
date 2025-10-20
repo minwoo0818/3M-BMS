@@ -61,3 +61,16 @@ export const updatePartner = async (partnerId: number, partnerData: PartnerDetai
   const response = await api.put<PartnerDetailResponse>(`/partners/${partnerId}`, partnerData);
   return response.data;
 };
+
+/**
+ * 특정 타입의 파트너 목록(부분 정보)을 조회합니다.
+ * 'customer' 또는 'supplier'를 파라미터로 넘겨 필터링합니다.
+ * @param partnerType 조회할 파트너의 유형 ('customer' 또는 'supplier')
+ * @returns PartnerListRowData 배열
+ */
+export const getPartnersList = async (partnerType: 'customer' | 'supplier'): Promise<PartnerListRowData[]> => {
+  const response = await api.get<PartnerListRowData[]>('/partners', { // /partners 엔드포인트는 partnerType 쿼리 파라미터를 받음
+    params: { partnerType },
+  });
+  return response.data;
+};

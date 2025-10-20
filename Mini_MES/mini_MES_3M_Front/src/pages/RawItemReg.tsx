@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
-  Stack,
   Typography,
   TextField,
   Button,
@@ -9,97 +8,44 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Stack,
 } from "@mui/material";
+
 import { useNavigate } from "react-router-dom";
-
-interface PartnerData {
-  id: number;
-  partnerName: string; // 업체명
-  brNum: string; // 사업자등록번호
-  bossName: string; // 대표명
-  bossPhone: string; // 대표 전화번호
-  address: string; // 주소
-  representativeName: string; // 담당자 (부서, 직급)
-  representativePhone: string; // 담당자 연락처
-  representativeEmail: string; // 담당자 이메일
-  remark: string; // 비고
-  type: "customer" | "supplier"; // 거래처 종류
-  active: boolean; // 거래상태
-}
-
-const dummyPartners: PartnerData[] = [
-  {
-    id: 1,
-    partnerName: "코드하우스",
-    brNum: "123-456789",
-    bossName: "박준형",
-    bossPhone: "055-123-4567",
-    address: "경남 창원시 창원대로123",
-    representativeName: "영업부 부장 박준형",
-    representativePhone: "010-1234-5678",
-    representativeEmail: "jhpark@codehouse.com",
-    remark: "주요 고객사",
-    type: "customer",
-    active: true,
-  },
-  {
-    id: 2,
-    partnerName: "구트하우스",
-    brNum: "987-654321",
-    bossName: "김지훈",
-    bossPhone: "051-987-6543",
-    address: "경남 창원시 창원대로456",
-    representativeName: "품질관리 홍석민 대리",
-    representativePhone: "010-9876-5432",
-    representativeEmail: "jhkim@goothouse.com",
-    remark: "원자재 단가 협의 필요",
-    type: "supplier",
-    active: false,
-  },
-  // 💡 원자재 거래처 더미 추가
-  {
-    id: 3,
-    partnerName: "노루표",
-    brNum: "999-999999",
-    bossName: "김노루",
-    bossPhone: "011-111-1111",
-    address: "서울 강남구",
-    representativeName: "영업팀 노대리",
-    representativePhone: "010-9999-9999",
-    representativeEmail: "noro@paint.com",
-    remark: "주력 원자재 공급처",
-    type: "supplier",
-    active: true,
-  },
-  {
-    id: 4,
-    partnerName: "KCC",
-    brNum: "888-888888",
-    bossName: "이KCC",
-    bossPhone: "022-222-2222",
-    address: "부산 해운대구",
-    representativeName: "구매팀 이차장",
-    representativePhone: "010-8888-8888",
-    representativeEmail: "kcc@chem.com",
-    remark: "경화제 공급처",
-    type: "supplier",
-    active: true,
-  },
-];
+import { registerRawsItem } from '../apis/rawsItemsApi'; // 새로 만든 RawsItem 등록 API import!
+import { getPartnersList } from '../apis/partnersApi'; // 매입처 목록 가져올 API import!
+import type { RawsItemRegistrationData } from '../types/RawsItemTypes'; // RawsItem 등록 데이터 타입 import!
+import type { PartnerListRowData } from '../types/partner'; // 매입처 타입 import!
 
 const RawItemReg = () => {
-  const [formData, setFormData] = useState({
-    partnerId: "" as string | number, // 선택된 업체 ID
-    itemName: "",
-    itemCode: "",
-    classification: "",
-    color: "",
-    unit: "",
-    manufacturer: "",
-    remark: "",
+  const [formData, setFormData] = useState<RawsItemRegistrationData>({
+    supplierId: 0, // 매입처 ID
+    itemCode: "", // 품목번호
+    itemName: "", // 품목명
+    classification: "", // 분류
+    color: "", // 색상
+    spec: "", // 규격 (unit -> spec 변경)
+    manufacturer: "", // 제조사
+    remark: "", // 비고
   });
 
+  const [partners, setPartners] = useState<PartnerListRowData[]>([]); // 매입처 목록 상태
+  const [errors, setErrors] = useState<{ [key: string]: string }>({}); // 유효성 검사 에러 상태
   const navigate = useNavigate();
+
+  // 매입처 목록 불러오기
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const supplierPartners = await getPartnersList('supplier'); // 'supplier' 타입의 파트너만 가져옴
+        setPartners(supplierPartners);
+      } catch (err) {
+        console.error("매입처 목록을 불러오는데 실패했습니다:", err);
+        alert("매입처 목록을 불러오는데 실패했습니다.");
+      }
+    };
+    fetchPartners();
+  }, []);
 
   const handleChange = (
     e:
@@ -107,32 +53,50 @@ const RawItemReg = () => {
       | { target: { name: string; value: unknown } }
   ) => {
     const { name, value } = e.target;
-
-    // partnerId는 숫자여야 하므로, Select에서 넘어온 경우 Number()로 변환
-    const finalValue =
-      name === "partnerId" && typeof value === "string" && !isNaN(Number(value))
-        ? Number(value)
-        : value;
-
-    setFormData((prev) => ({ ...prev, [name]: finalValue }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" })); // 값 변경 시 해당 필드의 에러 메시지 초기화
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // 클라이언트 측 유효성 검사
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+    if (!formData.supplierId) newErrors.supplierId = "매입처명을 선택해주세요.";
+    if (!formData.itemCode.trim()) newErrors.itemCode = "품목번호는 필수입니다.";
+    if (!formData.itemName.trim()) newErrors.itemName = "품목명은 필수입니다.";
+    if (!formData.classification.trim()) newErrors.classification = "분류는 필수입니다.";
+    if (!formData.spec.trim()) newErrors.spec = "규격은 필수입니다.";
+    if (!formData.manufacturer.trim()) newErrors.manufacturer = "제조사는 필수입니다.";
+    // 색상, 비고는 필수가 아님 (백엔드 DTO 기준)
+    return newErrors;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.partnerId) {
-      alert("업체명을 선택해주세요.");
+    const validationErrors = validateForm();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      alert("필수 입력 항목을 확인해주세요.");
       return;
     }
 
-    if (!formData.classification) {
-      alert("분류를 선택해주세요.");
-      return;
+    try {
+      // API 호출
+      const registeredItem = await registerRawsItem(formData);
+      console.log("등록된 원자재 데이터:", registeredItem);
+      alert("원자재 등록 완료!");
+      navigate("/raw/item/list"); // 성공 후 목록 페이지로 이동
+    } catch (err: any) {
+      console.error("원자재 등록 실패:", err);
+      if (err.response && err.response.data && typeof err.response.data === 'object') {
+        const errorDetail = Object.values(err.response.data).join(', ');
+        alert(`원자재 등록 실패: ${errorDetail}`);
+        // 백엔드에서 필드별 에러를 줄 경우, 이를 errors 상태에 매핑하여 표시 가능
+        // 예: setErrors(err.response.data.fieldErrors);
+      } else {
+        alert("원자재 등록 중 오류가 발생했습니다.");
+      }
     }
-
-    console.log("등록할 원자재 데이터:", formData);
-    alert("원자재 등록 완료! (백엔드 연결 예정)");
-    navigate("/Raw/item/list");
   };
 
   const handleCancel = () => {
@@ -166,25 +130,27 @@ const RawItemReg = () => {
           원자재 관리 - 등록
         </Typography>
 
-        <FormControl fullWidth required>
-          <InputLabel id="partner-select-label">업체명</InputLabel>
+        {/* 업체명 (매입처) */}
+        <FormControl fullWidth required error={!!errors.supplierId}>
+          <InputLabel id="partner-select-label">매입처명</InputLabel>
           <Select
             labelId="partner-select-label"
             id="partner-select"
-            name="partnerId"
-            value={String(formData.partnerId)}
-            label="업체명"
+            name="supplierId" // supplierId로 변경
+            value={formData.supplierId || ""} // 초기값 처리
+            label="매입처명"
             onChange={handleChange}
           >
-            {/* 💡 Select 옵션 반복문 */}
-            {dummyPartners
-              .filter((p) => p.type === "supplier") // 원자재 거래처만 필터링
-              .map((partner) => (
-                <MenuItem key={partner.id} value={partner.id}>
-                  {partner.partnerName}
-                </MenuItem>
-              ))}
+            <MenuItem value="">
+              <em>매입처 선택</em>
+            </MenuItem>
+            {partners.map((partner) => (
+              <MenuItem key={partner.partnerId} value={partner.partnerId}> {/* partnerId 사용 */}
+                {partner.name} {/* partner.name 사용 */}
+              </MenuItem>
+            ))}
           </Select>
+          {errors.supplierId && <Typography color="error" variant="caption">{errors.supplierId}</Typography>}
         </FormControl>
 
         <TextField
@@ -192,6 +158,9 @@ const RawItemReg = () => {
           name="itemCode"
           value={formData.itemCode}
           onChange={handleChange}
+          required
+          error={!!errors.itemCode}
+          helperText={errors.itemCode}
         />
 
         <TextField
@@ -199,10 +168,13 @@ const RawItemReg = () => {
           name="itemName"
           value={formData.itemName}
           onChange={handleChange}
+          required
+          error={!!errors.itemName}
+          helperText={errors.itemName}
         />
 
-        {/* 📌 4. 분류 (Select로 변경) */}
-        <FormControl fullWidth required>
+        {/* 📌 분류 (Select) */}
+        <FormControl fullWidth required error={!!errors.classification}>
           <InputLabel id="classification-select-label">분류</InputLabel>
           <Select
             labelId="classification-select-label"
@@ -218,28 +190,39 @@ const RawItemReg = () => {
             <MenuItem value="페인트">페인트</MenuItem>
             <MenuItem value="경화제">경화제</MenuItem>
             <MenuItem value="신나">신나</MenuItem>
-            <MenuItem value="KCC">KCC</MenuItem>
-            {/* UI 설계도에 따른 더미 옵션 추가 */}
+            <MenuItem value="방청제">방청제</MenuItem>
+            {/* UI 설계도에 따른 옵션 추가 */}
           </Select>
+          {errors.classification && <Typography color="error" variant="caption">{errors.classification}</Typography>}
         </FormControl>
+
         <TextField
           label="색상"
           name="color"
           value={formData.color}
           onChange={handleChange}
         />
+
         <TextField
-          label="규격"
-          name="unit"
-          value={formData.unit}
+          label="규격" // unit -> spec
+          name="spec" // unit -> spec
+          value={formData.spec} // unit -> spec
           onChange={handleChange}
+          required
+          error={!!errors.spec}
+          helperText={errors.spec}
         />
+
         <TextField
           label="제조사"
           name="manufacturer"
           value={formData.manufacturer}
           onChange={handleChange}
+          required
+          error={!!errors.manufacturer}
+          helperText={errors.manufacturer}
         />
+
         <TextField
           label="비고"
           name="remark"
@@ -250,7 +233,7 @@ const RawItemReg = () => {
         />
 
         <Stack direction="row" spacing={2} justifyContent="flex-end">
-          <Button variant="contained" onClick={handleSubmit}>
+          <Button variant="contained" type="submit"> {/* type="submit"으로 변경 */}
             등록
           </Button>
           <Button variant="outlined" onClick={handleCancel}>
