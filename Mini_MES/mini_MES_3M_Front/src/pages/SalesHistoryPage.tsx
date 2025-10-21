@@ -2,13 +2,13 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSalesHistoryStyles } from '../style/useSalesHistoryStyles';
 import { useCommonStyles } from '../style/useCommonStyles';
-import { Typography, Box, Button, TextField, Stack, Select, MenuItem, InputLabel, FormControl } from '@mui/material'; // Modal 관련 컴포넌트 제거
+import { Typography, Button, TextField, Stack } from '@mui/material';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { format, parseISO, isValid } from 'date-fns'; // isValid import 추가
+import { format, parseISO, isValid } from 'date-fns';
 
-import { getSalesInboundHistory, updateSalesInboundHistory, cancelSalesInboundHistory } from '../api/salesItemInboundApi'; // getSalesInboundDetail 제거
-import type { SalesInboundHistoryItem, SalesInboundUpdateRequest } from '../types/SalesItemInboundTypes'; // SalesInboundDetail 제거
+import { getSalesInboundHistory, updateSalesInboundHistory, cancelSalesInboundHistory } from '../api/salesItemInboundApi';
+import type { SalesInboundHistoryItem, SalesInboundUpdateRequest } from '../types/SalesItemInboundTypes';
 
 // ==========================================================
 // 1. 타입 정의
@@ -39,7 +39,7 @@ const OUTBOUND_SEARCH_OPTIONS: SearchOption[] = [];
 
 
 // ==========================================================
-// 3. 컴포넌트 시작 (SalesHistoryQueryPage 컴포넌트로 명칭 변경)
+// 3. 컴포넌트 시작
 // ==========================================================
 export default function SalesHistoryQueryPage() {
   const { type: urlType } = useParams<{ type: string }>();
@@ -55,16 +55,17 @@ export default function SalesHistoryQueryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchKey, setSearchKey] = useState<string>('all');
+  // 검색어 상태를 두 개로 분리: 입력 필드용(searchInputValue), 실제 검색 적용용(activeSearchTerm)
+  const [searchInputValue, setSearchInputValue] = useState(''); // 사용자가 입력 중인 검색어
+  const [activeSearchTerm, setActiveSearchTerm] = useState(''); // 현재 적용된 검색어 (API 호출용)
+  const [searchKey, setSearchKey] = useState<string>('all'); // 검색 기준
 
   const [currentPage, setCurrentPage] = useState(1);
   const [hoveredRowId, setHoveredRowId] = useState<number | null>(null);
 
-  // --- 인라인 편집 관련 상태 ---
-  const [editingInboundId, setEditingInboundId] = useState<number | null>(null); // 현재 편집 중인 입고 ID
-  const [editingData, setEditingData] = useState<SalesInboundUpdateRequest | null>(null); // 편집 중인 데이터 (수량, 일자)
-  const [editingErrors, setEditingErrors] = useState<{ qty?: string, receivedAt?: string, general?: string }>({}); // 인라인 편집 시 에러 메시지
+  const [editingInboundId, setEditingInboundId] = useState<number | null>(null);
+  const [editingData, setEditingData] = useState<SalesInboundUpdateRequest | null>(null);
+  const [editingErrors, setEditingErrors] = useState<{ qty?: string, receivedAt?: string, general?: string }>({});
 
 
   // --- 스타일 정의 ---
@@ -94,14 +95,15 @@ export default function SalesHistoryQueryPage() {
   // API 호출 함수
   // ----------------------------------------------------
 
-  const fetchInboundHistory = useCallback(async () => {
+  // 입고 이력 목록 불러오기 (activeSearchTerm에 따라 호출)
+  const fetchInboundHistory = useCallback(async (keyword: string) => { // 키워드를 인자로 받도록 수정
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getSalesInboundHistory(searchTerm); 
+      const data = await getSalesInboundHistory(keyword); // activeSearchTerm 대신 keyword 인자를 사용
       
       const filteredData = data.filter(item => {
-        const lowerSearchTerm = searchTerm.toLowerCase().trim();
+        const lowerSearchTerm = keyword.toLowerCase().trim(); // 인자로 받은 keyword를 사용
         if (!lowerSearchTerm || searchKey === 'all') return true;
 
         switch(searchKey) {
@@ -122,9 +124,10 @@ export default function SalesHistoryQueryPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [searchKey, searchTerm]);
+  }, [searchKey]); // searchKey만 의존성 배열에, searchTerm은 이제 인자로 받으므로 제외
 
 
+  // currentHistoryType 변경 또는 컴포넌트 마운트 시 초기화 및 데이터 불러오기
   useEffect(() => {
     if (currentHistoryType === 'OUTBOUND') {
       setIsLoading(false);
@@ -133,61 +136,68 @@ export default function SalesHistoryQueryPage() {
       return;
     }
 
-    setSearchTerm('');
+    setSearchInputValue(''); // 입력 필드 초기화
+    setActiveSearchTerm(''); // 실제 검색어 초기화
     setSearchKey('all');
     setCurrentPage(1);
-    fetchInboundHistory();
+    fetchInboundHistory(''); // 초기 데이터 로드 (빈 키워드로)
   }, [currentHistoryType, fetchInboundHistory]);
 
 
+  // activeSearchTerm이 변경될 때만 API 호출 (실제 검색 트리거)
+  useEffect(() => {
+    // currentHistoryType이 'INBOUND'일 때만 activeSearchTerm 변경에 따라 fetch
+    if (currentHistoryType === 'INBOUND') {
+      fetchInboundHistory(activeSearchTerm);
+    }
+  }, [activeSearchTerm, currentHistoryType, fetchInboundHistory]); // activeSearchTerm이 변경될 때만 다시 불러오기
+
+
   // ----------------------------------------------------
-  // 검색 로직
+  // 검색 로직 (검색 버튼 클릭 또는 Enter)
   // ----------------------------------------------------
   const handleSearchSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1); 
-    fetchInboundHistory();
-  }, [fetchInboundHistory]);
+    e.preventDefault(); // 기본 폼 제출 동작 방지
+    setCurrentPage(1); // 검색 시 페이지 초기화
+    setActiveSearchTerm(searchInputValue); // 입력된 검색어를 실제 검색어로 적용
+  }, [searchInputValue]);
 
 
   // ----------------------------------------------------
   // 인라인 편집 관련 로직
   // ----------------------------------------------------
 
-  // 수정 버튼 클릭 시 인라인 편집 모드로 진입
   const handleEditClick = useCallback((item: SalesInboundHistoryItem) => {
+    if (item.isCancelled) return; // 취소된 항목은 수정 불가
+
     setEditingInboundId(item.inboundId);
     setEditingData({
       qty: item.qty,
       receivedAt: item.receivedAt,
     });
-    setEditingErrors({}); // 에러 초기화
+    setEditingErrors({});
   }, []);
 
-  // 인라인 입력 필드 변경 핸들러
   const handleInlineInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setEditingData(prev => prev ? { ...prev, [name]: name === 'qty' ? Number(value) : value } : null);
-    setEditingErrors(prev => ({ ...prev, [name]: undefined, general: undefined })); // 해당 필드 에러 초기화
+    setEditingErrors(prev => ({ ...prev, [name]: undefined, general: undefined }));
   }, []);
 
-  // 인라인 날짜 선택 변경 핸들러
   const handleInlineDateChange = useCallback((date: Date | null) => {
-    if (date && isValid(date)) { // 유효한 날짜인지 확인
+    if (date && isValid(date)) {
       setEditingData(prev => prev ? { ...prev, receivedAt: format(date, 'yyyy-MM-dd') } : null);
     } else {
-      setEditingData(prev => prev ? { ...prev, receivedAt: '' } : null); // 날짜 선택이 취소되거나 유효하지 않으면 빈 문자열
+      setEditingData(prev => prev ? { ...prev, receivedAt: '' } : null);
     }
     setEditingErrors(prev => ({ ...prev, receivedAt: undefined, general: undefined }));
   }, []);
 
-  // 저장 버튼 클릭 시 API 호출 및 상태 업데이트
   const handleSaveClick = async (inboundId: number) => {
     if (!editingData) return;
 
-    // 클라이언트 측 유효성 검사
     const newErrors: { qty?: string, receivedAt?: string, general?: string } = {};
-    if (isNaN(editingData.qty) || editingData.qty <= 0) {
+    if (isNaN(editingData.qty) || editedInboundData.qty <= 0) { // editedInboundData 대신 editingData 사용
       newErrors.qty = "입고 수량은 1개 이상이어야 합니다.";
     }
     if (!editingData.receivedAt || !isValid(parseISO(editingData.receivedAt))) {
@@ -198,14 +208,15 @@ export default function SalesHistoryQueryPage() {
       setEditingErrors(newErrors);
       return;
     }
-    setEditingErrors({}); // 에러 초기화
+    setEditingErrors({});
 
     try {
       await updateSalesInboundHistory(inboundId, editingData);
       alert('입고 이력이 성공적으로 수정되었습니다.');
-      setEditingInboundId(null); // 편집 모드 종료
-      setEditingData(null); // 편집 데이터 초기화
-      fetchInboundHistory(); // 목록 새로고침
+      setEditingInboundId(null);
+      setEditingData(null);
+      // 수정 후에는 현재 적용된 검색어로 목록을 다시 불러옴
+      fetchInboundHistory(activeSearchTerm); 
     } catch (err: any) {
       console.error('입고 이력 수정 실패:', err);
       if (err.response && err.response.data) {
@@ -216,11 +227,10 @@ export default function SalesHistoryQueryPage() {
     }
   };
 
-  // 취소 버튼 클릭 시 편집 모드 종료
   const handleCancelEditClick = useCallback(() => {
     setEditingInboundId(null);
     setEditingData(null);
-    setEditingErrors({}); // 에러 초기화
+    setEditingErrors({});
   }, []);
 
 
@@ -233,7 +243,8 @@ export default function SalesHistoryQueryPage() {
     try {
       await cancelSalesInboundHistory(inboundId);
       alert('입고 이력이 성공적으로 취소(삭제)되었습니다.');
-      fetchInboundHistory(); // 목록 새로고침
+      // 삭제 후에는 현재 적용된 검색어로 목록을 다시 불러옴
+      fetchInboundHistory(activeSearchTerm); 
     } catch (err: any) {
       console.error('입고 이력 취소 실패:', err);
       if (err.response && err.response.data && typeof err.response.data === 'object') {
@@ -265,10 +276,8 @@ export default function SalesHistoryQueryPage() {
   // ----------------------------------------------------
   return (
     <div style={styles.container}>
-      {/* 타이틀 */}
       <h1 style={styles.header}>{title}</h1>
 
-      {/* 검색 영역 */}
       <form onSubmit={handleSearchSubmit} style={styles.searchContainer}>
         <div style={styles.searchGroup}>
           <select
@@ -284,8 +293,8 @@ export default function SalesHistoryQueryPage() {
           </select>
           <input
             type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchInputValue} // searchInputValue를 사용
+            onChange={(e) => setSearchInputValue(e.target.value)} // searchInputValue만 업데이트
             placeholder={placeholder}
             style={styles.searchInput}
           />
@@ -295,7 +304,6 @@ export default function SalesHistoryQueryPage() {
         </button>
       </form>
 
-      {/* 로딩/에러/데이터 없음 메시지 */}
       {isLoading && <Typography sx={{ p: 2 }}>데이터를 불러오는 중입니다...</Typography>}
       {error && <Typography color="error" sx={{ p: 2 }}>에러: {error}</Typography>}
       {!isLoading && !error && currentHistoryType === 'INBOUND' && inboundHistory.length === 0 && (
@@ -327,14 +335,14 @@ export default function SalesHistoryQueryPage() {
             </thead>
             <tbody>
               {currentItems.map((item, index) => {
-                const isEditing = editingInboundId === item.inboundId; // 현재 행이 편집 모드인지 여부
+                const isEditing = editingInboundId === item.inboundId;
                 return (
                   <tr 
                     key={item.inboundId}
                     style={{
                       ...styles.tableRow,
                       ...(hoveredRowId === item.inboundId ? styles.tdHover : {}),
-                      backgroundColor: item.isCancelled ? '#fcdede' : isEditing ? '#e8f5e9' : 'inherit' // 취소되거나 편집 중인 항목 배경색
+                      backgroundColor: item.isCancelled ? '#fcdede' : isEditing ? '#e8f5e9' : 'inherit'
                     }}
                     onMouseEnter={() => setHoveredRowId(item.inboundId)}
                     onMouseLeave={() => setHoveredRowId(null)}
@@ -387,7 +395,7 @@ export default function SalesHistoryQueryPage() {
                                           error={!!editingErrors.receivedAt}
                                           helperText={editingErrors.receivedAt}
                                         />}
-                          wrapperClassName="date-picker-wrapper" // css 오버라이드를 위한 클래스명
+                          wrapperClassName="date-picker-wrapper"
                         />
                       ) : (
                         item.receivedAt
@@ -402,7 +410,7 @@ export default function SalesHistoryQueryPage() {
                           <>
                             <Button 
                               variant="contained" 
-                              color="success" // 저장 버튼은 초록색
+                              color="success"
                               size="small" 
                               onClick={() => handleSaveClick(item.inboundId)}
                               sx={{ fontSize: '0.7rem' }}
@@ -449,7 +457,7 @@ export default function SalesHistoryQueryPage() {
               })}
             </tbody>
           </table>
-          {editingErrors.general && ( // 일반 API 에러 메시지 표시 (테이블 하단 등)
+          {editingErrors.general && (
               <Typography color="error" variant="body2" sx={{ mt: 2 }}>{editingErrors.general}</Typography>
           )}
         </div>
