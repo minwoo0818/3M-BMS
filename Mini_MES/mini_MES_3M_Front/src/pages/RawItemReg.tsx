@@ -12,8 +12,8 @@ import {
 } from "@mui/material";
 
 import { useNavigate } from "react-router-dom";
-import { registerRawsItem } from '../apis/rawsItemsApi'; // 새로 만든 RawsItem 등록 API import!
-import { getPartnersList } from '../apis/partnersApi'; // 매입처 목록 가져올 API import!
+import { registerRawsItem } from '../api/rawsItemsApi'; // 새로 만든 RawsItem 등록 API import!
+import { getPartnersList } from '../api/partnersApi'; // 매입처 목록 가져올 API import!
 import type { RawsItemRegistrationData } from '../types/RawsItemTypes'; // RawsItem 등록 데이터 타입 import!
 import type { PartnerListRowData } from '../types/partner'; // 매입처 타입 import!
 

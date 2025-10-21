@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCommonStyles } from "../style/useCommonStyles";
 
-import { getAllRawsItems, updateRawsItemStatus } from '../apis/rawsItemsApi'; // API 함수 import!
+import { getAllRawsItems, updateRawsItemStatus } from '../api/rawsItemsApi'; // API 함수 import!
 import type { RawsItemPartialData } from '../types/RawsItemTypes'; // RawsItemPartialData 타입 import!
 import { Box, Typography, Button } from "@mui/material"; // MUI 컴포넌트 추가
 
