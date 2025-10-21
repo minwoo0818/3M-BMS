@@ -4,14 +4,14 @@ import type { HistoryType } from "../types/sales_history";
 
 export const useSalesHistoryStyles = () => {
   return useMemo(() => ({
-    header: (type: HistoryType): React.CSSProperties => ({
-      fontSize: '24px',
-      fontWeight: 'bold',
-      paddingBottom: '10px',
-      marginBottom: '20px',
-      borderBottom: `4px solid ${type === 'INBOUND' ? '#3b82f6' : '#f97316'}`,
-      color: type === 'INBOUND' ? '#1e3a8a' : '#7c2d12'
-    }),
+    // header: (type: HistoryType): React.CSSProperties => ({
+    //   fontSize: '24px',
+    //   fontWeight: 'bold',
+    //   paddingBottom: '10px',
+    //   marginBottom: '20px',
+    //   borderBottom: `4px solid ${type === 'INBOUND' ? '#3b82f6' : '#f97316'}`,
+    //   color: type === 'INBOUND' ? '#1e3a8a' : '#7c2d12'
+    // }),
 
     modeButton: (isActive: boolean, type: HistoryType): React.CSSProperties => {
       const activeBg = type === 'INBOUND' ? '#3b82f6' : '#f97316';
