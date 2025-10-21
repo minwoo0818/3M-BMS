@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 
 import { useNavigate, useParams } from "react-router-dom";
-import { getPartnerDetails, updatePartner } from '../apis/partnersApi';
+import { getPartnerDetails, updatePartner } from '../api/partnersApi';
 import type { PartnerDetailResponse, PartnerDetailUpdateRequest } from '../types/partner'; // 변경된 타입 import!
 
 const PartnersDetail = () => {

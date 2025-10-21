@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { useCommonStyles } from '../style/useCommonStyles'; 
 import { useNavigate } from "react-router-dom";
 import type { PartnerListRowData, SearchField } from '../types/partner'; // PartnerListRowData 사용!
-import { getPartnersPartial, updatePartnerStatus } from '../apis/partnersApi'; // API 함수 import
+import { getPartnersPartial, updatePartnerStatus } from '../api/partnersApi'; // API 함수 import
 
 const ITEMS_PER_PAGE = 5; // 페이지당 항목 수
 
