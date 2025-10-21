@@ -30,7 +30,16 @@ export const useProcessStyles = () => {
         borderRadius: "8px",
         boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
       } as const,
+
+      inlineInput: {
+        width: "100%",
+        padding: "4px 8px",
+        fontSize: "14px",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+      } as const,
     }),
+
     [common]
   );
 };

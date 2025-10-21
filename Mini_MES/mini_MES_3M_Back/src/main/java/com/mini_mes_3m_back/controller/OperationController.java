@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/operation")         // 공통 URL 경로 설정
+@RequestMapping("/info/routing")         // 공통 URL 경로 설정
 @RequiredArgsConstructor                     // final 필드를 이용한 생성자 주입
 public class OperationController {
 
@@ -96,7 +96,7 @@ public class OperationController {
         catch (IllegalArgumentException e) {
             // ID를 찾을 수 없거나 중복 코드가 발생한 경우
             return ResponseEntity.status(HttpStatus.BAD_REQUEST) // 400 Bad Request
-                    .body("{\"message\": \"" + e.getMessage() + "\"}");
+                    .body("{\"message\": \" + e.getMessage() + \"}");
         }
     }
 

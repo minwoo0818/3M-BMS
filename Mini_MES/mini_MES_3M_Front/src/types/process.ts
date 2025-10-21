@@ -5,6 +5,7 @@ export type ProcessItem = {
   name: string;
   processContent: string;
   processTime: number; // minutes
+  operationId: number;
 };
 
 // 검색 옵션 타입
