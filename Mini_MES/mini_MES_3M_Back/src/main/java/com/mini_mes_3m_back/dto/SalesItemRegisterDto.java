@@ -21,11 +21,6 @@ public class SalesItemRegisterDto {
     private String coatingMethod;  // 도장방식
     private String remark;         // 비고
 
-
-
     // 3. 라우팅/공정
     private List<Long> operationIds;     // 요청용: 선택된 공정 ID 리스트
-  // private List<OperationDto> operations; // 응답용: 공정 DTO 리스트
-    // private Integer totalOperations;     // 응답용: 총 공정 수
-
 }

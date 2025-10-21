@@ -1,7 +1,5 @@
 import React from 'react';
 import { useCommonStyles } from '../style/useCommonStyles';
-import { useProcessStyles } from '../style/useProcessStyles';
-import { useSalesHistoryStyles } from '../style/useSalesHistoryStyles';
 
 const ProcessStatusPage: React.FC = () => {
   const common = useCommonStyles();

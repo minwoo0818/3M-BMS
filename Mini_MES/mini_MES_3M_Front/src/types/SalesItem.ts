@@ -8,4 +8,5 @@ export interface SalesItemFormData {
   coatingMethod: string;
   remark: string;
   operations: string;
+  operationIds: number[];
 }

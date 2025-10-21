@@ -40,7 +40,7 @@ const SalesItemOutboundPage: React.FC = () => {
 
   return (
     <div style={common.container}>
-      <h1 style={common.header}>수주품목 출고 등록</h1>
+      <h1 style={common.header}>수주품목 - 출고 등록</h1>
 
       {/* 검색 영역 */}
       <div style={common.searchContainer}>
