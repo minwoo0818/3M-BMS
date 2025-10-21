@@ -20,7 +20,7 @@ public class SalesItemOperation {
 
     @ManyToOne(optional=false)
     @JoinColumn(name="operation_id")
-    private Operation operation;
+    private Operations operations;
 
     @Column(nullable=false)
     private Integer seq;

@@ -3,8 +3,8 @@ export type ProcessItem = {
   no: number;
   code: string;
   name: string;
-  processContent: string;
-  processTime: number; // minutes
+  description: string;
+  standardTime: number; // minutes
   operationId: number;
 };
 

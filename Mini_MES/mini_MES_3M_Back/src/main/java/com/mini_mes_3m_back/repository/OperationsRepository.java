@@ -2,9 +2,25 @@ package com.mini_mes_3m_back.repository;
 
 import com.mini_mes_3m_back.entity.Operations;
 import org.springframework.data.jpa.repository.JpaRepository;
-import java.util.List;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.stereotype.Repository;
 
-public interface OperationsRepository extends JpaRepository<Operations, Long> {
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface OperationsRepository extends JpaRepository<Operations, Long>, JpaSpecificationExecutor<Operations>
+{
     // 공정 코드 또는 공정명으로 검색 (대소문자 무시)
     List<Operations> findByCodeContainingIgnoreCaseOrNameContainingIgnoreCase(String code, String name);
+
+    // [조회, 수정] 공정 코드로 엔티티를 찾는 메서드
+    Optional<Operations> findByCode(String code);
+
+    /**
+     * [등록] 공정 코드 중복 확인을 위한 메서드 (효율적인 중복 체크).
+     * @param code 확인할 공정 코드
+     * @return 중복 여부 (true: 중복됨, false: 사용 가능)
+     */
+    boolean existsByCode(String code);
 }

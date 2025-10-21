@@ -1,121 +1,57 @@
 import React, { useState, useCallback, useEffect } from "react";
-
 import type { ProcessItem, SearchOption } from "../types/process";
-
 import { useCommonStyles } from "../style/useCommonStyles";
-
 import { useProcessStyles } from "../style/useProcessStyles";
-
 import axios from "axios";
 
-// ==========================================================
-
-// 2. 상수 및 더미 데이터
-
-// ==========================================================
-
-// 데이터를 충분히 늘려서 페이징 테스트 용이하게 함 (총 35개)
-
-// const DUMMY_PROCESS_DATA: ProcessItem[] = Array.from(
-
-//   { length: 35 },
-
-//   (_, i) => ({
-
-//     no: i + 1,
-
-//     code: `PC-${10 + i}`,
-
-//     name: `공정명 ${i + 1}`,
-
-//     processContent: `공정 내용 ${i + 1}: 품질 검사 기준`,
-
-//     processTime: 20 + (i % 10),
-
-//   })
-
-// );
-
-const API_BASE_URL = "/api/info/routing";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const ITEMS_PER_PAGE = 10;
 
-// ==========================================================
-
-// 4. 컴포넌트 시작
-
-// ==========================================================
-
 const ProcessRegisterPage: React.FC = () => {
-  // ----------------------------------------------------
-
-  // State & Styles
-
-  // ----------------------------------------------------
-
   const styles = {
     ...useCommonStyles(),
-
     ...useProcessStyles(),
   };
 
   // 공정 등록 아코디언 상태 (기본 펼침)
-
   const [isRegisterOpen, setIsRegisterOpen] = useState(true);
 
   // 공정 등록 폼 상태
-
   const [newProcess, setNewProcess] = useState({
     code: "",
-
     name: "",
-
-    processContent: "",
-
-    processTime: "",
+    description: "",
+    standardTime: "",
   });
 
   // 중복 확인 관련 상태 추가
-
   const [isCodeChecked, setIsCodeChecked] = useState(false); // 중복 확인 버튼을 눌렀는지 여부
-
   const [isCodeAvailable, setIsCodeAvailable] = useState(false); // 코드가 사용 가능한지 여부
 
   // 검색/조회 상태
-
   const [searchType, setSearchType] = useState<SearchOption>("전체");
-
   const [searchTerm, setSearchTerm] = useState("");
-
   const [fullData, setFullData] = useState<ProcessItem[]>([]); // 검색 결과 전체 데이터
-
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState(null);
 
   //수정
-
   const [editingRowId, setEditingRowId] = useState<number | null>(null);
-
   const [rowEdits, setRowEdits] = useState<
     Record<number, Partial<ProcessItem>>
   >({});
 
   // 페이징 상태
-
   const [currentPage, setCurrentPage] = useState(1);
-
   const [hoveredRow, setHoveredRow] = useState<number | null>(null); // 행 호버 상태
 
   //   const itemsPerPage = ITEMS_PER_PAGE; // 페이지 당 항목 수: 10개
-
   const [totalPages, setTotalPages] = useState(1);
 
   // API 통신 로직 (최소 수정)
-
   const fetchProcesses = useCallback(async () => {
     setLoading(true);
-
     setError(null);
 
     const pageIndex = currentPage; // Spring Page는 0-base
@@ -138,7 +74,9 @@ const ProcessRegisterPage: React.FC = () => {
     // NOTE: searchType은 백엔드 API 스펙에 맞게 'code', 'name' 등으로 변환 필요
 
     try {
-      const response = await axios.get(API_BASE_URL, { params });
+      const response = await axios.get(`${API_BASE_URL}/info/routing`, {
+        params,
+      });
 
       // API 응답 구조: PageImpl
 
@@ -170,6 +108,11 @@ const ProcessRegisterPage: React.FC = () => {
     fetchProcesses();
   }, [fetchProcesses]);
 
+  useEffect(() => {
+    setIsCodeChecked(false);
+    setIsCodeAvailable(false);
+  }, [newProcess.code]);
+
   // ----------------------------------------------------
 
   // Handlers
@@ -189,7 +132,7 @@ const ProcessRegisterPage: React.FC = () => {
 
     // 공정 시간은 숫자만 받도록 처리
 
-    if (name === "processTime" && value !== "" && !/^\d+$/.test(value)) return;
+    if (name === "standardTime" && value !== "" && !/^\d+$/.test(value)) return;
 
     setNewProcess((prev) => ({ ...prev, [name]: value }));
   };
@@ -214,9 +157,12 @@ const ProcessRegisterPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.get(`${API_BASE_URL}/check-code`, {
-        params: { code: newProcess.code },
-      });
+      const response = await axios.get(
+        `${API_BASE_URL}/info/routing/check-code`,
+        {
+          params: { code: newProcess.code },
+        }
+      );
 
       console.log("백엔드 응답:", response.data); // true or false
 
@@ -275,7 +221,7 @@ const ProcessRegisterPage: React.FC = () => {
   // 공정 등록 처리
 
   const handleRegister = useCallback(async () => {
-    if (!newProcess.code || !newProcess.name || !newProcess.processTime) {
+    if (!newProcess.code || !newProcess.name || !newProcess.standardTime) {
       //   return console.error("필수 항목 (코드, 명칭, 시간)을 입력해주세요.");
 
       console.error("필수 항목 (코드, 명칭, 시간)을 입력해주세요.");
@@ -300,15 +246,15 @@ const ProcessRegisterPage: React.FC = () => {
 
       name: newProcess.name,
 
-      processContent: newProcess.processContent || "",
+      description: newProcess.description || "",
 
-      processTime: parseInt(newProcess.processTime) || 0,
+      standardTime: parseInt(newProcess.standardTime) || 0,
     };
 
     try {
       // POST 요청: /api/info/routing
 
-      await axios.post(API_BASE_URL, payload);
+      await axios.post(`${API_BASE_URL}/info/routing`, payload);
 
       console.log("공정이 등록되었습니다.");
 
@@ -319,9 +265,9 @@ const ProcessRegisterPage: React.FC = () => {
 
         name: "",
 
-        processContent: "",
+        description: "",
 
-        processTime: "",
+        standardTime: "",
       });
 
       // 등록 후 1페이지로 이동하여 새로고침
@@ -401,7 +347,7 @@ const ProcessRegisterPage: React.FC = () => {
           : "all";
 
       try {
-        const response = await axios.get(API_BASE_URL, {
+        const response = await axios.get(`${API_BASE_URL}/info/routing`, {
           params: {
             page: 1,
             limit: 10,
@@ -540,7 +486,7 @@ const ProcessRegisterPage: React.FC = () => {
     if (
       !editedRow?.code?.trim() ||
       !editedRow?.name?.trim() ||
-      editedRow.processTime == null
+      editedRow.standardTime == null
     ) {
       alert("필수 항목(코드, 명칭, 시간)을 입력해주세요.");
       return;
@@ -548,9 +494,12 @@ const ProcessRegisterPage: React.FC = () => {
 
     try {
       // ✅ 공정코드 중복 검사
-      const checkRes = await axios.get(`${API_BASE_URL}/check-code`, {
-        params: { code: editedRow.code },
-      });
+      const checkRes = await axios.get(
+        `${API_BASE_URL}/info/routing/check-code`,
+        {
+          params: { code: editedRow.code },
+        }
+      );
 
       const { isDuplicate, available } = checkRes.data;
       const isCodeUsable = available !== undefined ? available : !isDuplicate;
@@ -565,11 +514,11 @@ const ProcessRegisterPage: React.FC = () => {
       const payload = {
         code: editedRow.code, // ✅ 백엔드가 필수로 요구할 수 있음
         name: editedRow.name,
-        processContent: editedRow.processContent,
-        processTime: Number(editedRow.processTime),
+        description: editedRow.description,
+        standardTime: Number(editedRow.standardTime),
       };
 
-      await axios.put(`${API_BASE_URL}/${operationId}`, payload);
+      await axios.put(`${API_BASE_URL}/info/routing/${operationId}`, payload);
 
       alert("공정이 수정되었습니다.");
 
@@ -596,7 +545,7 @@ const ProcessRegisterPage: React.FC = () => {
         return;
 
       try {
-        await axios.delete(`${API_BASE_URL}/${item.operationId}`);
+        await axios.delete(`${API_BASE_URL}/info/routing/${item.operationId}`);
         console.log(`[${item.code}] 공정 삭제 성공!`);
         alert("삭제 성공!");
         fetchProcesses(); // 삭제 후 목록 새로고침
@@ -679,8 +628,8 @@ const ProcessRegisterPage: React.FC = () => {
 
             <input
               style={styles.input}
-              name="processContent"
-              value={newProcess.processContent}
+              name="description"
+              value={newProcess.description}
               onChange={handleProcessChange}
               placeholder="예: 2액형 우레탄 도료 사용 및 60분 건조"
             />
@@ -691,10 +640,10 @@ const ProcessRegisterPage: React.FC = () => {
 
             <input
               style={styles.input}
-              name="processTime"
+              name="standardTime"
               type="text" // type="number" 대신 text를 사용하여 입력 제어를 확실히 함
               pattern="\d*" // 모바일 키보드에서 숫자 입력 유도
-              value={newProcess.processTime}
+              value={newProcess.standardTime}
               onChange={handleProcessChange}
               placeholder="60"
             />
@@ -927,18 +876,18 @@ const ProcessRegisterPage: React.FC = () => {
                     >
                       {isEditing ? (
                         <input
-                          value={edited.processContent}
+                          value={edited.description}
                           onChange={(e) =>
                             handleEditChange(
                               item.operationId,
-                              "processContent",
+                              "description",
                               e.target.value
                             )
                           }
                           style={styles.inlineInput}
                         />
                       ) : (
-                        item.processContent
+                        item.description
                       )}
                     </td>
 
@@ -955,19 +904,19 @@ const ProcessRegisterPage: React.FC = () => {
                     >
                       {isEditing ? (
                         <input
-                          value={edited.processTime}
+                          value={edited.standardTime}
                           onChange={(e) => {
                             const val = e.target.value;
                             handleEditChange(
                               item.operationId,
-                              "processTime",
+                              "standardTime",
                               val === "" ? undefined : parseInt(val)
                             );
                           }}
                           style={styles.inlineInput}
                         />
                       ) : (
-                        item.processTime
+                        item.standardTime
                       )}
                     </td>
 

@@ -1,6 +1,6 @@
 package com.mini_mes_3m_back.dto;
 
-import com.mini_mes_3m_back.entity.Operation;
+import com.mini_mes_3m_back.entity.Operations;
 import lombok.*;
 
 @Getter
@@ -17,19 +17,19 @@ public class OperationResponseDto
 
     private String name;
 
-    private String processContent;
+    private String description;
 
-    private Integer processTime;
+    private Integer standardTime;
 
  // Entity (Operations)를 Response DTO로 변환하는 정적 팩토리 메서드
-    public  static OperationResponseDto fromEntity(Operation entity)
+    public  static OperationResponseDto fromEntity(Operations entity)
     {
         return OperationResponseDto.builder()
                 .operationId(entity.getOperationId())
                 .code(entity.getCode())
                 .name(entity.getName())
-                .processContent(entity.getProcessContent())
-                .processTime(entity.getProcessTime())
+                .description(entity.getDescription())
+                .standardTime(entity.getStandardTime())
                 .build();
     }
 }

@@ -2,8 +2,8 @@ package com.mini_mes_3m_back.service;
 
 import com.mini_mes_3m_back.dto.OperationRequestDto;
 import com.mini_mes_3m_back.dto.OperationResponseDto;
-import com.mini_mes_3m_back.entity.Operation;
-import com.mini_mes_3m_back.repository.OperationRepository;
+import com.mini_mes_3m_back.entity.Operations;
+import com.mini_mes_3m_back.repository.OperationsRepository;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
@@ -19,12 +19,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OperationService {
 
-    private final OperationRepository operationRepository;
+    private final OperationsRepository operationsRepository;
 
     // 공정 코드 중복 확인 로직
     @Transactional(readOnly = true)
     public boolean isCodeDuplicate(String code) {
-        return operationRepository.existsByCode(code);
+        return operationsRepository.existsByCode(code);
     }
 
     // 새로운 공정 등록 로직
@@ -36,13 +36,13 @@ public class OperationService {
         }
 
         // 2. Dto -> Entity 변환 및 저장
-        Operation newOperation = Operation.builder()
+        Operations newOperation = Operations.builder()
                 .code(dto.getCode())
                 .name(dto.getName())
-                .processContent(dto.getProcessContent())
-                .processTime(dto.getProcessTime())
+                .description(dto.getDescription())
+                .standardTime(dto.getStandardTime())
                 .build();
-        operationRepository.save(newOperation);
+        operationsRepository.save(newOperation);
     }
 
     // 공정 목록 조회 및 검색 (페이징 포함)
@@ -54,10 +54,10 @@ public class OperationService {
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.ASC, "operationId"));
 
         // 1. 동적 검색을 위한 Specification 생성
-        Specification<Operation> spec = buildSearchSpecification(searchType, searchTerm);
+        Specification<Operations> spec = buildSearchSpecification(searchType, searchTerm);
 
         // 2. Repository에서 검색 및 페이징된 결과 조회
-        Page<Operation> entityPage = operationRepository.findAll(spec, pageable);
+        Page<Operations> entityPage = operationsRepository.findAll(spec, pageable);
 
         // 3. Entity Page를 Response DTO Page로 변환
         List<OperationResponseDto> dtoList = entityPage.getContent().stream()
@@ -71,7 +71,7 @@ public class OperationService {
     /**
      * JpaSpecificationExecutor를 위한 동적 검색 조건 빌더
      */
-    private Specification<Operation> buildSearchSpecification(String searchType, String searchTerm) {
+    private Specification<Operations> buildSearchSpecification(String searchType, String searchTerm) {
         if (searchTerm == null || searchTerm.trim().isEmpty() || "전체".equals(searchType)) {
             // 검색어 없거나 "전체" 검색 시, 필터링 없음
             return (root, query, criteriaBuilder) -> criteriaBuilder.conjunction();
@@ -100,12 +100,12 @@ public class OperationService {
     @Transactional
     public void updateProcess(Long operationId, OperationRequestDto dto) {
         // 1. ID로 기존 엔티티 조회 (없으면 예외 발생)
-        Operation existingOperation = operationRepository.findById(operationId)
+        Operations existingOperation = operationsRepository.findById(operationId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 공정 ID입니다: " + operationId));
 
         // 2. 공정 코드가 변경되었고, 그 코드가 다른 공정과 중복되는지 확인
         if (!existingOperation.getCode().equals(dto.getCode())) {
-            if (operationRepository.existsByCode(dto.getCode())) {
+            if (operationsRepository.existsByCode(dto.getCode())) {
                 throw new IllegalArgumentException("이미 존재하는 공정 코드입니다: " + dto.getCode());
             }
         }
@@ -115,8 +115,8 @@ public class OperationService {
         existingOperation.update(
                 dto.getCode(),
                 dto.getName(),
-                dto.getProcessContent(),
-                dto.getProcessTime()
+                dto.getDescription(),
+                dto.getStandardTime()
         );
 
         // save()를 호출할 필요 없이, @Transactional에 의해 변경 감지(Dirty Checking)로 자동 업데이트됨.
@@ -128,11 +128,11 @@ public class OperationService {
     @Transactional
     public void deleteProcess(Long operationId) {
         // 1. ID로 엔티티 존재 여부 확인
-        if (!operationRepository.existsById(operationId)) {
+        if (!operationsRepository.existsById(operationId)) {
             throw new IllegalArgumentException("삭제할 공정을 찾을 수 없습니다: " + operationId);
         }
 
         // 2. 삭제
-        operationRepository.deleteById(operationId);
+        operationsRepository.deleteById(operationId);
     }
 }

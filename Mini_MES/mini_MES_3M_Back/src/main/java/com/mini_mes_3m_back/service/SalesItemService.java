@@ -60,7 +60,7 @@ public class SalesItemService {
             for (int i = 0; i < operations.size(); i++) {
                 SalesItemOperation sio = new SalesItemOperation();
                 sio.setSalesItem(salesItem);
-                sio.setOperation(operations.get(i));
+                sio.setOperations(operations.get(i));
                 sio.setSeq(i + 1); // seq 설정
                 itemOperations.add(sio);
             }
@@ -130,7 +130,7 @@ public class SalesItemService {
                         .orElseThrow(() -> new RuntimeException("Operation not found: " + opId));
                 SalesItemOperation sio = new SalesItemOperation();
                 sio.setSalesItem(item);
-                sio.setOperation(op);
+                sio.setOperations(op);
                 sio.setSeq(i + 1); // seq 설정
                 itemOps.add(sio);
             }
@@ -161,7 +161,7 @@ public class SalesItemService {
     private SalesItemRegisterDto mapToRegisterDto(SalesItem item) {
         List<Long> operationIds = item.getOperations() == null ? Collections.emptyList() :
                 item.getOperations().stream()
-                        .map(op -> op.getOperation().getOperationId())
+                        .map(op -> op.getOperations().getOperationId())
                         .collect(Collectors.toList());
 
         return new SalesItemRegisterDto(
@@ -181,11 +181,11 @@ public class SalesItemService {
         List<OperationDto> operationDtos = item.getOperations() == null ? Collections.emptyList() :
                 item.getOperations().stream()
                         .map(o -> new OperationDto(
-                                o.getOperation().getOperationId(),
-                                o.getOperation().getCode(),
-                                o.getOperation().getName(),
-                                o.getOperation().getDescription(),
-                                o.getOperation().getStandardTime()
+                                o.getOperations().getOperationId(),
+                                o.getOperations().getCode(),
+                                o.getOperations().getName(),
+                                o.getOperations().getDescription(),
+                                o.getOperations().getStandardTime()
                         )).collect(Collectors.toList());
 
         return new SalesItemDetailViewDto(
