@@ -11,6 +11,14 @@ import java.util.List;
 import java.util.Optional;
 
 public interface SalesItemRepository extends JpaRepository<SalesItem, Long> {
+
+    @Query("SELECT s FROM SalesItem s " +
+            "WHERE (:kw IS NULL OR :kw = '') OR " +
+            "(LOWER(s.itemName) LIKE LOWER(concat('%',:kw,'%')) " +
+            " OR LOWER(s.itemCode) LIKE LOWER(concat('%',:kw,'%')) " +
+            " OR LOWER(s.partnerName) LIKE LOWER(concat('%',:kw,'%')))")
+    Page<SalesItem> searchByKeyword(@Param("kw") String keyword, Pageable pageable);
+
     Page<SalesItem> findByItemNameContainingIgnoreCase(String itemName, Pageable pageable);
 
     Optional<SalesItem> findByItemCode(String itemCode);

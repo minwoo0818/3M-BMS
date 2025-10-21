@@ -14,7 +14,7 @@ import RawItemReg from "./pages/RawItemReg";
 import RawsHistoryPage from "./pages/RawsHistoryPage";
 import RawItemInboundPage from "./pages/RawItemInboundPage";
 import RawItemOutboundPage from "./pages/RawItemOutboundPage";
-import SalesItemViewPage from "./pages/SalesItemViewPage";
+import SalesItemViewPage from "./pages/SalesItemListPage";
 import RawItemInventoryPage from "./pages/RawsItemInventoryPage";
 import ProcessStatusPage from "./pages/ProcessStatusPage";
 import RawItemList from "./pages/RawItemList";
@@ -100,17 +100,17 @@ const App = () => {
             {/* ... 페이지 라우트 설정 ... */}
 
             {/* 수주품목 등록 페이지 */}
-            <Route path="/order/item/register" element={<SalesItemRegisterPage />} />
+            <Route path="/sales/item/register" element={<SalesItemRegisterPage />} />
             {/* 수주품목 입고 등록 페이지 */}
-            <Route path="/order/inbound/register" element={<SalesItemInboundPage />} />
+            <Route path="/sales/inbound/register" element={<SalesItemInboundPage />} />
             {/* 수주품목 출고 등록 페이지 */}
-            <Route path="/order/outbound/register" element={<SalesItemOutboundPage />} />
+            <Route path="/sales/outbound/register" element={<SalesItemOutboundPage />} />
             {/* 원자재품목 입고 등록 페이지 */}
             <Route path="/raw/inbound/register" element={<RawItemInboundPage />} />
             {/* 원자재품목 출고 등록 페이지 */}
             <Route path="/raw/outbound/register" element={<RawItemOutboundPage />} />
             {/* 수주품목 조회 페이지 */}
-            <Route path="/order/item/history" element={<SalesItemViewPage />} />
+            <Route path="/sales/item/history" element={<SalesItemViewPage />} />
             {/* 재고현황 페이지 */}
             <Route path="/raw/stock/status" element={<RawItemInventoryPage />} />
             {/* 공정진행현황 페이지 */}

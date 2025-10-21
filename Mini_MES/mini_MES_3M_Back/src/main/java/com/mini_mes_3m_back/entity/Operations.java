@@ -1,15 +1,18 @@
 package com.mini_mes_3m_back.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.OffsetDateTime;
 
 @Entity
-@Getter @Setter
 // getters / setters
 @Table(name = "operations")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
+@Builder
 public class Operations {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long operationId;
@@ -23,6 +26,7 @@ public class Operations {
     @Column(columnDefinition = "text")
     private String description;
 
+    @Column(nullable = false)
     private Integer standardTime;
 
     private OffsetDateTime createdAt;
@@ -30,4 +34,13 @@ public class Operations {
     @PrePersist
     public void prePersist(){ createdAt = OffsetDateTime.now(); }
     // getters / setters
+
+    // Operations.java (엔티티 파일에 추가 필요)
+    public void update(String code, String name, String description, Integer standardTime) {
+        this.code = code;
+        this.name = name;
+        this.description = description;
+        this.standardTime = standardTime;
+        // this.updatedAt = OffsetDateTime.now(); // 필요하다면 수정 시간도 업데이트
+    }
 }
