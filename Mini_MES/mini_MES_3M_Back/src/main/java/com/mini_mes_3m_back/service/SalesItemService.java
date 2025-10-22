@@ -8,11 +8,17 @@ import com.mini_mes_3m_back.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.mini_mes_3m_back.entity.*;
+import com.mini_mes_3m_back.repository.*;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -30,7 +36,15 @@ public class SalesItemService {
     // 1️⃣ 등록 / 수정
     // -------------------
     @Transactional
-    public SalesItemRegisterDto createSalesItem(SalesItemRegisterDto dto) {
+    public void updateSalesItemActive(Long salesItemId, Boolean active) {
+        SalesItem item = salesItemRepository.findById(salesItemId)
+                .orElseThrow(() -> new RuntimeException("SalesItem not found: " + salesItemId));
+        item.setActive(active);
+        salesItemRepository.save(item);
+    }
+
+    @Transactional
+    public SalesItemRegisterDto createSalesItemWithImage(SalesItemRegisterDto dto, MultipartFile file) {
         Partner partner = null;
         if (dto.getPartnerId() != null) {
             partner = partnerRepository.findById(dto.getPartnerId())
@@ -54,6 +68,23 @@ public class SalesItemService {
         salesItem.setRemark(dto.getRemark());
 
         // 공정 매핑 — seq 필수
+        // 이미지 파일 저장
+        if (file != null && !file.isEmpty()) {
+            try {
+                String uploadDir = "uploads/sales-items";
+                Files.createDirectories(Paths.get(uploadDir));
+
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir).resolve(fileName);
+
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                salesItem.setImagePath(filePath.toString());
+            } catch (IOException e) {
+                throw new RuntimeException("이미지 업로드 실패", e);
+            }
+        }
+
+        // 공정 매핑
         if (dto.getOperationIds() != null && !dto.getOperationIds().isEmpty()) {
             List<Operations> operations = operationsRepository.findAllById(dto.getOperationIds());
             List<SalesItemOperation> itemOperations = new ArrayList<>();
@@ -68,16 +99,16 @@ public class SalesItemService {
             salesItem.setTotalOperations(itemOperations.size());
         }
 
-        SalesItem saved = salesItemRepository.save(salesItem);
+        SalesItem saved = salesItemRepository.saveAndFlush(salesItem);
         return mapToRegisterDto(saved);
     }
+
     @Transactional(readOnly = true)
     public List<PartnerSelectResponseDto> getAllActivePartners() {
         return partnerRepository.findByActiveTrue().stream()
                 .map(p -> new PartnerSelectResponseDto(p.getPartnerId(), p.getName()))
                 .collect(Collectors.toList());
     }
-
 
     // -------------------
     // 2️⃣ 목록 조회
@@ -164,6 +195,44 @@ public class SalesItemService {
                         .map(op -> op.getOperations().getOperationId())
                         .collect(Collectors.toList());
 
+    @Transactional(readOnly = true)
+    public SalesItemDetailDto getSalesItemDetail(Long id) {
+        SalesItem item = salesItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
+
+        List<SalesItemOperation> operations = salesItemOperationRepository.findBySalesItem_SalesItemIdOrderBySeqAsc(id);
+
+        List<OperationDto> operationDtos = operations.stream()
+                .map(o -> new OperationDto(
+                        o.getOperation().getOperationId(),
+                        o.getOperation().getCode(),
+                        o.getOperation().getName(),
+                        o.getOperation().getDescription(),
+                        o.getOperation().getStandardTime()))
+                .collect(Collectors.toList());
+
+        return new SalesItemDetailDto(
+                item.getSalesItemId(),
+                item.getPartnerName(),
+                item.getItemCode(),
+                item.getItemName(),
+                item.getClassification(),
+                item.getPrice(),
+                item.getColor(),
+                item.getCoatingMethod(),
+                item.getRemark(),
+                item.getImagePath(),
+                operationDtos);
+    }
+
+    private SalesItemRegisterDto mapToRegisterDto(SalesItem item) {
+        List<SalesItemOperation> operations = salesItemOperationRepository
+                .findBySalesItem_SalesItemIdOrderBySeqAsc(item.getSalesItemId());
+
+        List<Long> operationIds = operations.stream()
+                .map(o -> o.getOperation().getOperationId())
+                .collect(Collectors.toList());
+
         return new SalesItemRegisterDto(
                 item.getPartner() != null ? item.getPartner().getPartnerId() : null,
                 item.getItemName(),
@@ -173,8 +242,7 @@ public class SalesItemService {
                 item.getClassification(),
                 item.getCoatingMethod(),
                 item.getRemark(),
-                operationIds
-        );
+                operationIds);
     }
 
     private SalesItemDetailViewDto mapToDetailDto(SalesItem item) {
@@ -192,6 +260,13 @@ public class SalesItemService {
                 item.getSalesItemId(),
                 item.getPartner() != null ? item.getPartner().getPartnerId() : null,
                 item.getPartnerName(),
+
+    private SalesItemSearchDto mapToSearchDto(SalesItem item) {
+        return new SalesItemSearchDto(
+                item.getSalesItemId(),
+                item.getPartner() != null ? item.getPartner().getPartnerId() : null,
+                item.getPartner() != null ? item.getPartner().getName() : null,
+                item.getItemCode(),
                 item.getItemName(),
                 item.getItemCode(),
                 item.getPrice(),
@@ -201,6 +276,7 @@ public class SalesItemService {
                 item.getRemark(),
                 item.getActive(),
                 operationDtos
+                
         );
-    }
+    })
 }

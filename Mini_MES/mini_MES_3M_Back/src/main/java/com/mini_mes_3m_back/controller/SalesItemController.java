@@ -7,7 +7,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,8 +29,7 @@ public class SalesItemController {
     public ResponseEntity<Page<SalesItemDetailViewDto>> getSalesItems(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
         return ResponseEntity.ok(salesItemService.getSalesItems(keyword, pageable));
     }
@@ -43,8 +44,7 @@ public class SalesItemController {
     @PutMapping("/{id}")
     public ResponseEntity<SalesItemRegisterDto> updateSalesItem(
             @PathVariable Long id,
-            @RequestBody SalesItemRegisterDto dto
-    ) {
+            @RequestBody SalesItemRegisterDto dto) {
         return ResponseEntity.ok(salesItemService.updateSalesItem(id, dto));
     }
 
@@ -53,5 +53,33 @@ public class SalesItemController {
     public ResponseEntity<SalesItemDetailViewDto> toggleTradeStatus(@PathVariable Long id) {
         SalesItemDetailViewDto updated = salesItemService.toggleTradeStatus(id);
         return ResponseEntity.ok(updated);
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<SalesItemRegisterDto> createSalesItem(
+            @RequestPart("data") SalesItemRegisterDto dto,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        SalesItemRegisterDto result = salesItemService.createSalesItemWithImage(dto, file);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<SalesItemSearchDto>> getAllSalesItems() {
+        List<SalesItemSearchDto> items = salesItemService.getAllSalesItemsForSearch();
+        return ResponseEntity.ok(items);
+    }
+
+    @PutMapping("/{salesItemId}/active")
+    public ResponseEntity<Void> updateActive(
+            @PathVariable Long salesItemId,
+            @RequestBody SalesItemUpdateStatusRequestDto requestDto) {
+        salesItemService.updateSalesItemActive(salesItemId, requestDto.getActive());
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{salesItemId}")
+    public ResponseEntity<SalesItemDetailDto> getSalesItemDetail(@PathVariable Long salesItemId) {
+        SalesItemDetailDto detail = salesItemService.getSalesItemDetail(salesItemId);
+        return ResponseEntity.ok(detail);
     }
 }
