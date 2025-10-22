@@ -13,7 +13,7 @@ import {
 
 import { useNavigate } from "react-router-dom";
 import { registerRawsItem } from '../api/rawsItemsApi'; // 새로 만든 RawsItem 등록 API import!
-import { getPartnersList } from '../api/partnersApi'; // 매입처 목록 가져올 API import!
+import { getActivePartnersByType, getPartnersList } from '../api/partnersApi'; // 매입처 목록 가져올 API import!
 import type { RawsItemRegistrationData } from '../types/RawsItemTypes'; // RawsItem 등록 데이터 타입 import!
 import type { PartnerListRowData } from '../types/partner'; // 매입처 타입 import!
 
@@ -37,7 +37,7 @@ const RawItemReg = () => {
   useEffect(() => {
     const fetchPartners = async () => {
       try {
-        const supplierPartners = await getPartnersList('supplier'); // 'supplier' 타입의 파트너만 가져옴
+        const supplierPartners = await getActivePartnersByType('supplier'); // 'supplier' 타입의 파트너만 가져옴
         setPartners(supplierPartners);
       } catch (err) {
         console.error("매입처 목록을 불러오는데 실패했습니다:", err);
