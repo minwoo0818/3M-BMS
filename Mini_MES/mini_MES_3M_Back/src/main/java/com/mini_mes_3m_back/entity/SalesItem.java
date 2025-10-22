@@ -44,11 +44,12 @@ public class SalesItem {
     private Boolean active = true;
     private OffsetDateTime createdAt;
 
+    private String imagePath;
+
+    // SalesItemOperation과의 관계 설정 (mappedBy 필드가 올바르게 설정됨)
     @OneToMany(mappedBy = "salesItem", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SalesItemOperation> operations;
 
 
     @PrePersist public void prePersist(){ createdAt = OffsetDateTime.now(); }
-
-
 }

@@ -12,9 +12,8 @@ import React, {
   type ChangeEvent,
   type FormEvent,
 } from "react";
-import { useParams, useNavigate } from "react-router-dom"; // ⭐️ useParams, useNavigate 임포트
+import { useParams, useNavigate } from "react-router-dom";
 
-// ProcessItem 인터페이스는 등록 페이지와 동일하게 사용
 interface ProcessItem {
   no: number;
   processCode: string;
@@ -25,7 +24,6 @@ interface ProcessItem {
 
 type SearchOption = "전체" | "공정코드" | "공정명";
 
-// ⭐️ 더미 상세 데이터 (조회 페이지에서 클릭된 항목이라고 가정)
 const dummySalesItem = {
   partnerName: "코드하우스",
   itemName: "핀걸이 스프링",
@@ -54,12 +52,10 @@ const dummySalesItem = {
   ],
 };
 
-// ⭐️ 상세/수정 페이지 컴포넌트 시작
 const SalesItemDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>(); // URL 파라미터에서 ID 가져오기
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // ⭐️ [STATE 1] 폼 데이터: 초기값을 더미 데이터로 설정
   const [form, setForm] = useState({
     partnerName: dummySalesItem.partnerName,
     itemName: dummySalesItem.itemName,
@@ -71,20 +67,15 @@ const SalesItemDetailPage: React.FC = () => {
     remark: dummySalesItem.remark,
   });
 
-  // ⭐️ [STATE 2] 수정 모드 상태: 초기에는 조회 모드 (false)
   const [isEditMode, setIsEditMode] = useState(false);
-
-  // ⭐️ [STATE 3] 선택된 공정 항목: 초기값을 더미 라우팅 데이터로 설정
   const [selectedRoutings, setSelectedRoutings] = useState<ProcessItem[]>(
     dummySalesItem.routings
   );
 
-  // ... (나머지 공정 검색 관련 상태는 등록 페이지와 동일하게 유지)
   const [searchType, setSearchType] = useState<SearchOption>("전체");
   const [searchTerm, setSearchTerm] = useState("");
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
 
-  // ⭐️ 가상 데이터 (선택 가능 공정 목록 - 기존 등록 페이지의 fullData와 동일)
   const fullProcessData: ProcessItem[] = [
     {
       no: 1,
@@ -110,31 +101,24 @@ const SalesItemDetailPage: React.FC = () => {
   ];
   const currentProcessData = fullProcessData;
 
-  // ⭐️ [효과] ID가 변경될 때마다 데이터를 로드하는 로직 (실제 API 호출)
   useEffect(() => {
     console.log(`품목 ID ${id}의 데이터를 로드합니다.`);
-    // TODO: 실제 API 호출을 통해 dummySalesItem을 대체할 데이터 로드
-    // 로드 후 setForm, setSelectedRoutings 업데이트
   }, [id]);
 
-  // ⭐️ [핸들러] 체크박스 핸들러 (선택된 라우팅 목록을 ProcessItem 객체로 관리)
   const handleRoutingCheckboxChange = (item: ProcessItem) => {
     setSelectedRoutings((prev) => {
       if (prev.find((r) => r.processCode === item.processCode)) {
         return prev.filter((r) => r.processCode !== item.processCode);
       } else {
-        // 기존 선택 항목의 순서를 유지하고, 새 항목을 추가
         return [...prev, item];
       }
     });
   };
 
-  const handleSearch = (e: FormEvent) => {
-    e.preventDefault();
+  const handleSearch = () => {
     alert(`공정 검색: ${searchType} - ${searchTerm}`);
   };
 
-  // 기존 등록 페이지의 handleChange 함수 사용 (MUI Select/TextField 겸용)
   const handleChange = (
     e:
       | ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -145,40 +129,26 @@ const SalesItemDetailPage: React.FC = () => {
     setForm({ ...form, [name]: value });
   };
 
-  // ⭐️ [핸들러] 수정/등록/삭제 버튼 핸들러
   const handleEditToggle = () => {
-    if (isEditMode) {
-      // 수정 완료 로직 (API 호출)
-      console.log("품목 수정 완료:", form, "라우팅:", selectedRoutings);
-      alert("품목 수정이 완료되었습니다.");
-    }
-    // 상태 토글
-    setIsEditMode(!isEditMode);
+    console.log("✏️ 수정 모드로 전환합니다");
+    setIsEditMode(true);
   };
 
-  // const handleDelete = () => {
-  //   if (window.confirm("정말로 이 품목을 삭제하시겠습니까?")) {
-  //     console.log(`품목 ID ${id} 삭제 요청`);
-  //     // TODO: 실제 API 호출로 삭제
-  //     alert("품목이 삭제되었습니다.");
-  //     navigate("/sales/view"); // 조회 페이지로 돌아가기
-  //   }
-  // };
+  const handleFormSubmit = () => {
+    console.log("💾 저장 완료:", form, selectedRoutings);
+    alert("품목 수정이 완료되었습니다.");
+    setIsEditMode(false);
+  };
 
   const handleCancel = () => {
-    // 수정 중 취소 시 원래 데이터로 복구하는 로직 추가 가능
-    // 여기서는 간단히 조회 페이지로 돌아가기
     navigate("/sales/item/history");
   };
 
-  // ... (옵션 및 스타일은 등록 페이지와 동일하게 사용)
   const partnerOptions = ["삼성전자", "LG화학", "현대중공업", "코드하우스"];
   const classificationOptions = ["방산", "일반", "자동차", "조선"];
   const coatingOptions = ["분체도장", "액체도장", "도금"];
 
-  // 스타일 객체는 기존 등록 페이지의 로컬 스타일을 그대로 사용
   const styles = {
-    // ... (기존 등록 페이지의 styles 객체 내용)
     searchContainer: {
       display: "flex",
       alignItems: "center",
@@ -246,15 +216,9 @@ const SalesItemDetailPage: React.FC = () => {
         수주품목 관리 - {isEditMode ? "수정" : "상세조회"}
       </h1>
 
-      <Stack
-        component="form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleEditToggle();
-        }}
-      >
+      {/* ✅ 수정된 핵심 부분 */}
+      <Stack component="form" onSubmit={(e) => e.preventDefault()}>
         <div style={{ display: "flex", gap: "40px" }}>
-          {/* 왼쪽 입력 영역 */}
           <div style={{ flex: 2 }}>
             <div
               style={{
@@ -263,7 +227,6 @@ const SalesItemDetailPage: React.FC = () => {
                 gap: "12px",
               }}
             >
-              {/* 2열 입력 필드 (읽기/수정 모드에 따라 disabled 설정) */}
               {[
                 {
                   label: "업체명",
@@ -306,15 +269,12 @@ const SalesItemDetailPage: React.FC = () => {
                       fullWidth
                       sx={{ fontSize: 18 }}
                       inputProps={{ sx: { fontSize: 18 } }}
-                      disabled={!isEditMode} // ⭐️ 수정 모드가 아니면 비활성화
+                      disabled={
+                        field.name === "partnerName" ? true : !isEditMode
+                      }
                     >
-                      {/* Select는 value가 없으면 에러가 날 수 있으므로 기본 '선택' 항목은 제외하거나, 해당 필드가 필수인지 확인 필요 */}
                       {field.options!.map((option) => (
-                        <MenuItem
-                          key={option}
-                          value={option}
-                          sx={{ fontSize: 17 }}
-                        >
+                        <MenuItem key={option} value={option} sx={{ fontSize: 17 }}>
                           {option}
                         </MenuItem>
                       ))}
@@ -326,14 +286,13 @@ const SalesItemDetailPage: React.FC = () => {
                       onChange={handleChange}
                       fullWidth
                       inputProps={{ style: { fontSize: 17 } }}
-                      disabled={!isEditMode} // ⭐️ 수정 모드가 아니면 비활성화
+                      disabled={!isEditMode}
                     />
                   )}
                 </div>
               ))}
             </div>
 
-            {/* 비고 */}
             <div style={{ marginTop: "12px" }}>
               <label
                 style={{
@@ -352,11 +311,10 @@ const SalesItemDetailPage: React.FC = () => {
                 rows={3}
                 fullWidth
                 inputProps={{ style: { fontSize: 17 } }}
-                disabled={!isEditMode} // ⭐️ 수정 모드가 아니면 비활성화
+                disabled={!isEditMode}
               />
             </div>
 
-            {/* 라우팅란 */}
             <div style={{ marginTop: "12px" }}>
               <label
                 style={{
@@ -368,26 +326,11 @@ const SalesItemDetailPage: React.FC = () => {
                 라우팅 (선택된 공정: {selectedRoutings.length}건)
               </label>
 
-              {/* 공정 검색 및 조회 */}
-              <h3
-                style={{
-                  fontSize: "22px",
-                  fontWeight: "600",
-                  marginBottom: "12px",
-                  color: "#1f2937",
-                }}
-              >
-                Q 공정 검색
-              </h3>
-
-              <form onSubmit={handleSearch} style={styles.searchContainer}>
-                {/* 검색 필드는 수정 모드일 때만 활성화 */}
+              <div style={styles.searchContainer}>
                 <div style={styles.searchGroup}>
                   <select
                     value={searchType}
-                    onChange={(e) =>
-                      setSearchType(e.target.value as SearchOption)
-                    }
+                    onChange={(e) => setSearchType(e.target.value as SearchOption)}
                     style={styles.searchSelect}
                     disabled={!isEditMode}
                   >
@@ -407,26 +350,14 @@ const SalesItemDetailPage: React.FC = () => {
                 </div>
 
                 <button
-                  type="submit"
+                  type="button"
                   style={styles.searchButton}
                   disabled={!isEditMode}
+                  onClick={handleSearch}
                 >
-                  <svg
-                    style={{ width: "20px", height: "20px" }}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    ></path>
-                  </svg>
+                  🔍
                 </button>
-              </form>
+              </div>
 
               <p
                 style={{
@@ -438,13 +369,11 @@ const SalesItemDetailPage: React.FC = () => {
               >
                 총{" "}
                 <span style={{ color: "#2563eb", fontWeight: "bold" }}>
-                  {" "}
-                  {fullProcessData.length.toLocaleString()}{" "}
+                  {fullProcessData.length.toLocaleString()}
                 </span>{" "}
                 건 조회됨
               </p>
 
-              {/* 공정 목록 테이블 */}
               <div style={styles.tableContainer}>
                 <table style={styles.table}>
                   <thead>
@@ -457,74 +386,62 @@ const SalesItemDetailPage: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {currentProcessData.length === 0 ? (
-                      <tr key="no-data">
-                        <td colSpan={5} style={styles.td}>
-                          {" "}
-                          조회된 공정 데이터가 없습니다.{" "}
-                        </td>
-                      </tr>
-                    ) : (
-                      currentProcessData.map((item) => {
-                        const isHovered = hoveredRow === item.no;
-                        const isSelected = selectedRoutings.some(
-                          (r) => r.processCode === item.processCode
-                        ); // ⭐️ 선택 여부 확인
-                        return (
-                          <tr
-                            key={item.processCode}
-                            style={isHovered ? styles.tdHover : {}}
-                            onMouseEnter={() => setHoveredRow(item.no)}
-                            onMouseLeave={() => setHoveredRow(null)}
+                    {currentProcessData.map((item) => {
+                      const isHovered = hoveredRow === item.no;
+                      const isSelected = selectedRoutings.some(
+                        (r) => r.processCode === item.processCode
+                      );
+                      return (
+                        <tr
+                          key={item.processCode}
+                          style={isHovered ? styles.tdHover : {}}
+                          onMouseEnter={() => setHoveredRow(item.no)}
+                          onMouseLeave={() => setHoveredRow(null)}
+                        >
+                          <td style={{ ...styles.td, width: "5%" }}>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleRoutingCheckboxChange(item)}
+                              disabled={!isEditMode}
+                            />
+                          </td>
+                          <td style={{ ...styles.td, width: "15%" }}>
+                            {item.processCode}
+                          </td>
+                          <td style={{ ...styles.td, width: "15%" }}>
+                            {item.processName}
+                          </td>
+                          <td
+                            style={{
+                              ...styles.td,
+                              width: "45%",
+                              textAlign: "left",
+                              color: "#4b5563",
+                              fontSize: "13px",
+                            }}
                           >
-                            <td style={{ ...styles.td, width: "5%" }}>
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() =>
-                                  handleRoutingCheckboxChange(item)
-                                }
-                                disabled={!isEditMode} // ⭐️ 수정 모드가 아니면 비활성화
-                              />
-                            </td>
-                            <td style={{ ...styles.td, width: "15%" }}>
-                              {item.processCode}
-                            </td>
-                            <td style={{ ...styles.td, width: "15%" }}>
-                              {item.processName}
-                            </td>
-                            <td
-                              style={{
-                                ...styles.td,
-                                width: "45%",
-                                textAlign: "left" as const,
-                                color: "#4b5563",
-                                fontSize: "13px",
-                              }}
-                            >
-                              {item.processContent}
-                            </td>
-                            <td
-                              style={{
-                                ...styles.td,
-                                width: "10%",
-                                fontWeight: "bold",
-                                color: "#1d4ed8",
-                              }}
-                            >
-                              {item.processTime}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
+                            {item.processContent}
+                          </td>
+                          <td
+                            style={{
+                              ...styles.td,
+                              width: "10%",
+                              fontWeight: "bold",
+                              color: "#1d4ed8",
+                            }}
+                          >
+                            {item.processTime}
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
 
-          {/* 오른쪽 이미지 영역 */}
           <div style={{ width: "360px" }}>
             <div
               style={{
@@ -538,31 +455,23 @@ const SalesItemDetailPage: React.FC = () => {
                 marginBottom: "16px",
               }}
             >
-              {/* 이미지 미리보기 로직은 등록 페이지와 동일하게 유지 */}
               <span style={{ fontSize: "17px", color: "#999" }}>
                 품목 이미지 (등록된 이미지 표시)
               </span>
             </div>
-            {/* 파일 첨부 필드는 수정 모드일 때만 표시 */}
-            {isEditMode && (
-              <input
-                type="file"
-                accept="image/*" /* onChange={handleFileChange} */
-              />
-            )}
+            {isEditMode && <input type="file" accept="image/*" />}
           </div>
         </div>
 
-        {/* 버튼 영역: 수정 모드에 따라 버튼 변경 */}
+        {/* ✅ 버튼: 완전 수정됨 */}
         <Stack
           direction="row"
           spacing={2}
           justifyContent="flex-end"
           sx={{ pt: 3, position: "absolute", bottom: "-50px", right: "-20px" }}
         >
-          {/* 1. 수정/저장 버튼 */}
           <Button
-            type={isEditMode ? "submit" : "button"} // 수정 모드일 때만 submit
+            type="button"
             variant="contained"
             sx={{
               px: 5,
@@ -571,13 +480,16 @@ const SalesItemDetailPage: React.FC = () => {
               bgcolor: isEditMode ? "#22c55e" : "#2563eb",
               "&:hover": { bgcolor: isEditMode ? "#16a34a" : "#1d4ed8" },
             }}
-            onClick={!isEditMode ? handleEditToggle : undefined} // 조회 모드일 때만 클릭 이벤트 직접 처리
+            onClick={() => {
+              if (isEditMode) handleFormSubmit();
+              else handleEditToggle();
+            }}
           >
             {isEditMode ? "저장 (수정 완료)" : "수정"}
           </Button>
 
-          {/* 2. 취소 버튼 (항상 표시) */}
           <Button
+            type="button"
             variant="outlined"
             onClick={handleCancel}
             sx={{ px: 5, py: 1.5, fontSize: 14 }}

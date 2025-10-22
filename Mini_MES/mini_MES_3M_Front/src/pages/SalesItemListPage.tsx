@@ -1,63 +1,128 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useCommonStyles } from "../style/useCommonStyles";
-import { useProcessStyles } from "../style/useProcessStyles";
 import { useSalesHistoryStyles } from "../style/useSalesHistoryStyles";
 import { useNavigate } from "react-router-dom";
+import { fetchSalesItems, updateSalesItemActive } from "../api/salesItemApi";
+import type { SalesItem } from "../api/salesItemApi";
+
+interface ItemData extends SalesItem {
+  ACTIVE: "Y" | "N";
+  price: string;
+  coatingMethod: string;
+  remark: string;
+}
 
 const SalesItemViewPage: React.FC = () => {
   const navigate = useNavigate();
   const common = useCommonStyles();
-  const process = useProcessStyles();
   const history = useSalesHistoryStyles();
 
+  const [data, setData] = useState<ItemData[]>([]);
   const [searchType, setSearchType] = useState("전체");
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
-  const data = [
-    {
-      id: 1,
-      partnerName: "코드하우스",
-      itemCode: "Code-001",
-      itemName: "핀걸이 스프링",
-      classification: "방산",
-      price: "1,000원",
-      coating_method: "분체도장",
-      remark: "고객 요청사항 있음",
-      ACTIVE: "Y", // 거래 중
-    },
-    {
-      id: 2,
-      partnerName: "창원금속",
-      itemCode: "Code-002",
-      itemName: "와셔",
-      classification: "기계",
-      price: "500원",
-      coating_method: "도금",
-      remark: "정상 거래 중지됨",
-      ACTIVE: "N", // 거래 중지
-    },
-  ];
+  // -------------------------------
+  // 1. 데이터 fetch
+  // -------------------------------
+  useEffect(() => {
+    const getData = async () => {
+      try {
+        const items = await fetchSalesItems();
+        const mapped: ItemData[] = items.map((item) => ({
+          ...item,
+          ACTIVE: item.active ? "Y" : "N",
+          price: item.price ? `${item.price.toLocaleString()}원` : "0원",
+          coatingMethod: item.coatingMethod || "",
+          remark: item.remark || "",
+        }));
+        setData(mapped);
+      } catch (err) {
+        console.error("데이터 조회 실패:", err);
+      }
+    };
+    getData();
+  }, []);
 
-  const handleSearch = () => {
-    console.log("검색:", searchType, searchKeyword);
+  // -------------------------------
+  // 2. 검색 기능
+  // -------------------------------
+  const handleSearch = useCallback(() => {
+    setSearchTerm(searchKeyword);
+    setCurrentPage(1);
+  }, [searchKeyword]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSearch();
+    }
+  };
+
+  const filteredData = useMemo(() => {
+    const keyword = searchTerm.toLowerCase().trim();
+    if (!keyword && searchType === "전체") return data;
+
+    return data.filter((item) => {
+      const isMatch = (value: string) => value.toLowerCase().includes(keyword);
+
+      switch (searchType) {
+        case "partnerName":
+          return isMatch(item.partnerName);
+        case "itemName":
+          return isMatch(item.itemName);
+        case "itemCode":
+          return isMatch(item.itemCode);
+        case "ACTIVE_Y":
+          return item.ACTIVE === "Y";
+        case "ACTIVE_N":
+          return item.ACTIVE === "N";
+        default:
+          return (
+            isMatch(item.partnerName) ||
+            isMatch(item.itemName) ||
+            isMatch(item.itemCode)
+          );
+      }
+    });
+  }, [data, searchType, searchTerm]);
+
+  // -------------------------------
+  // 3. 거래 상태 토글
+  // -------------------------------
+  const handleToggleStatus = async (salesItemId: number) => {
+    const target = data.find((item) => item.salesItemId === salesItemId);
+    if (!target) return;
+
+    const newStatus = target.ACTIVE === "Y" ? false : true;
+
+    try {
+      await updateSalesItemActive(salesItemId, newStatus);
+
+      setData((prev) =>
+        prev.map((item) =>
+          item.salesItemId === salesItemId
+            ? { ...item, ACTIVE: newStatus ? "Y" : "N" }
+            : item
+        )
+      );
+    } catch (err) {
+      console.error("거래 상태 변경 실패:", err);
+    }
   };
 
   const handleExcelDownload = () => {
     console.log("엑셀 다운로드");
   };
 
-  const handleToggleStatus = (itemCode: string, current: string) => {
-    const next = current === "Y" ? "N" : "Y";
-    console.log(`거래 상태 변경: ${itemCode} (${current} → ${next})`);
-    // 실제로 상태를 변경하려면 setState로 data 업데이트 로직 추가 가능
+  const handleItemClick = (salesItemId: number) => {
+    navigate(`/sales/item/detail/${salesItemId}`);
   };
 
-  // ⭐️ 상세 페이지로 이동하는 함수 추가
-  const handleItemClick = (id: number) => {
-    navigate(`/sales/item/detail/${id}`);
-  };
-
+  // -------------------------------
+  // 4. 렌더링
+  // -------------------------------
   return (
     <div style={common.container}>
       <h1 style={common.header}>수주품목관리 - 조회</h1>
@@ -65,13 +130,7 @@ const SalesItemViewPage: React.FC = () => {
       {/* 검색 영역 */}
       <div style={common.searchContainer}>
         <div style={common.searchGroup}>
-          <div
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-            }}
-          >
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)}
@@ -81,8 +140,8 @@ const SalesItemViewPage: React.FC = () => {
               <option value="partnerName">거래처명</option>
               <option value="itemName">품목명</option>
               <option value="itemCode">품목번호</option>
-              <option value="ACTIVE_Y">사용여부(Y)</option>
-              <option value="ACTIVE_N">사용여부(N)</option>
+              <option value="ACTIVE_Y">거래중(Y)</option>
+              <option value="ACTIVE_N">거래중지(N)</option>
             </select>
             <span
               style={{
@@ -102,28 +161,11 @@ const SalesItemViewPage: React.FC = () => {
             onChange={(e) => setSearchKeyword(e.target.value)}
             placeholder="거래처명, 품목명, 품목 번호로 검색해 주세요"
             style={history.searchInput}
+            onKeyDown={handleSearchKeyDown}
           />
         </div>
-        {/* 돋보기 검색 버튼 */}
-        <button
-          type="submit"
-          style={common.searchButton}
-          onClick={handleSearch}
-        >
-          <svg
-            style={{ width: "20px", height: "20px" }}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            ></path>
-          </svg>
+        <button type="submit" style={common.searchButton} onClick={handleSearch}>
+          🔍
         </button>
       </div>
 
@@ -132,139 +174,40 @@ const SalesItemViewPage: React.FC = () => {
         <table style={{ ...common.table, fontSize: "13px" }}>
           <thead>
             <tr>
-              <th
-                style={{
-                  ...common.th(true, false),
-                  width: "30px",
-                  padding: "10px",
-                }}
-              >
-                No.
-              </th>
-              <th
-                style={{
-                  ...common.th(true, false),
-                  width: "120px",
-                  padding: "10px",
-                }}
-              >
-                거래처명
-              </th>
-              <th
-                style={{
-                  ...common.th(false, false),
-                  width: "120px",
-                  padding: "10px",
-                }}
-              >
-                품목 번호
-              </th>
-              <th
-                style={{
-                  ...common.th(false, false),
-                  width: "140px",
-                  padding: "10px",
-                }}
-              >
-                품목명
-              </th>
-              <th
-                style={{
-                  ...common.th(false, false),
-                  width: "90px",
-                  padding: "10px",
-                }}
-              >
-                분류
-              </th>
-              <th
-                style={{
-                  ...common.th(true, false),
-                  width: "120px",
-                  padding: "10px",
-                }}
-              >
-                단가(개 당)
-              </th>
-              <th
-                style={{
-                  ...common.th(true, false),
-                  width: "120px",
-                  padding: "10px",
-                }}
-              >
-                도장방식
-              </th>
-              <th
-                style={{
-                  ...common.th(false, false),
-                  width: "250px",
-                  padding: "10px",
-                }}
-              >
-                비고
-              </th>
-              <th
-                style={{
-                  ...common.th(false, false),
-                  width: "250px",
-                  padding: "10px",
-                }}
-              >
-                거래현황
-              </th>
+              <th style={{ ...common.th(true, false), width: "30px" }}>No.</th>
+              <th style={{ ...common.th(true, false), width: "120px" }}>거래처명</th>
+              <th style={{ ...common.th(false, false), width: "120px" }}>품목 번호</th>
+              <th style={{ ...common.th(false, false), width: "140px" }}>품목명</th>
+              <th style={{ ...common.th(false, false), width: "90px" }}>분류</th>
+              <th style={{ ...common.th(true, false), width: "120px" }}>단가(개 당)</th>
+              <th style={{ ...common.th(true, false), width: "120px" }}>도장방식</th>
+              <th style={{ ...common.th(false, false), width: "250px" }}>비고</th>
+              <th style={{ ...common.th(false, false), width: "250px" }}>거래현황</th>
             </tr>
           </thead>
-
           <tbody>
-            {data.map((row, idx) => (
-              <tr key={idx}>
-                <td style={{ ...common.td, width: "50px", padding: "8px" }}>
-                  {row.id}
-                </td>
-                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
-                  {row.partnerName}
-                </td>
-                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
-                  {row.itemCode}
-                </td>
-                {/* ⭐️ 품목명에 클릭 이벤트 적용 */}
+            {filteredData.map((row, index) => (
+              <tr key={row.salesItemId ?? `row-${index}`}>
+                <td style={{ ...common.td }}>{index + 1}</td>
+                <td style={{ ...common.td }}>{row.partnerName}</td>
+                <td style={{ ...common.td }}>{row.itemCode}</td>
                 <td
                   style={{
                     ...common.td,
-                    width: "140px",
-                    padding: "8px",
-                    cursor: "pointer", // 마우스 커서를 포인터로 변경
-                    color: "#2563eb", // 링크처럼 파란색으로 변경
-                    fontWeight: "bold", // 굵게 표시
-                    textDecoration: "underline", // 밑줄 추가
+                    cursor: "pointer",
+                    color: "#2563eb",
+                    fontWeight: "bold",
+                    textDecoration: "underline",
                   }}
-                  onClick={() => handleItemClick(row.id)} // 클릭 시 상세 페이지로 이동
+                  onClick={() => handleItemClick(row.salesItemId)}
                 >
                   {row.itemName}
                 </td>
-                <td style={{ ...common.td, width: "90px", padding: "8px" }}>
-                  {row.classification}
-                </td>
-                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
-                  {row.price}
-                </td>
-                <td style={{ ...common.td, width: "120px", padding: "8px" }}>
-                  {row.coating_method}
-                </td>
-                <td style={{ ...common.td, width: "250px", padding: "8px" }}>
-                  {row.remark}
-                </td>
-
-                {/* ✅ 거래현황 버튼 */}
-                <td
-                  style={{
-                    ...common.td,
-                    width: "250px",
-                    padding: "8px",
-                    textAlign: "center",
-                  }}
-                >
+                <td style={{ ...common.td }}>{row.classification}</td>
+                <td style={{ ...common.td }}>{row.price}</td>
+                <td style={{ ...common.td }}>{row.coatingMethod}</td>
+                <td style={{ ...common.td }}>{row.remark}</td>
+                <td style={{ ...common.td, textAlign: "center" }}>
                   {row.ACTIVE === "Y" ? (
                     <button
                       style={{
@@ -277,9 +220,7 @@ const SalesItemViewPage: React.FC = () => {
                         height: "32px",
                         minWidth: "90px",
                       }}
-                      onClick={() =>
-                        handleToggleStatus(row.itemCode, row.ACTIVE)
-                      }
+                      onClick={() => handleToggleStatus(row.salesItemId)}
                     >
                       거래종료
                     </button>
@@ -295,9 +236,7 @@ const SalesItemViewPage: React.FC = () => {
                         height: "32px",
                         minWidth: "90px",
                       }}
-                      onClick={() =>
-                        handleToggleStatus(row.itemCode, row.ACTIVE)
-                      }
+                      onClick={() => handleToggleStatus(row.salesItemId)}
                     >
                       거래재개
                     </button>
@@ -309,24 +248,17 @@ const SalesItemViewPage: React.FC = () => {
         </table>
       </div>
 
-      {/* 엑셀 다운로드 버튼 */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginTop: "20px",
-        }}
-      >
+      {/* 엑셀 다운로드 & 페이지네이션 */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
         <button style={history.excelButton} onClick={handleExcelDownload}>
           📥 EXCEL 다운로드
         </button>
       </div>
 
-      {/* 페이징 */}
       <div style={common.paginationContainer}>
         {[1, 2, 3].map((page) => (
           <button
-            key={page}
+            key={`page-${page}`}
             style={common.pageButton(currentPage === page)}
             onClick={() => setCurrentPage(page)}
           >
