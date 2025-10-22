@@ -8,6 +8,7 @@ export interface SalesOutboundListDto {
   receivedAt: string; // ISO 날짜 문자열
   qty: number;
   classification: string; // 품목 분류
+  remainingQty: string;
 }
 
 // 출고 등록 요청 DTO

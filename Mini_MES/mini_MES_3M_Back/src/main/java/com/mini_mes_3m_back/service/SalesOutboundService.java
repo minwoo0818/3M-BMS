@@ -31,8 +31,16 @@ public class SalesOutboundService {
                 .orElseThrow(() -> new IllegalArgumentException("입고 항목을 찾을 수 없습니다."));
 
         // 2. 출고 가능 여부 확인
-        if (inbound.getIsCancelled() || inbound.getIsOutboundProcessed()) {
-            throw new IllegalArgumentException("이미 출고되었거나 취소된 입고 항목입니다.");
+        if (inbound.getIsCancelled()) {
+            throw new IllegalArgumentException("이미 취소된 입고 항목입니다.");
+        }
+
+        if (inbound.getRemainingQty() <= 0) {
+            throw new IllegalArgumentException("이미 모든 수량이 출고된 항목입니다.");
+        }
+
+        if (dto.getQty() > inbound.getRemainingQty()) {
+            throw new IllegalArgumentException("출고 수량이 잔여 수량보다 많습니다.");
         }
 
         // 3. 출고 문서번호 생성
@@ -48,7 +56,14 @@ public class SalesOutboundService {
         salesOutboundRepository.save(outbound);
 
         // 5. 입고 항목 상태 업데이트 → 조회에서 제외되도록
-        inbound.setIsOutboundProcessed(true);
+        int remaining = inbound.getRemainingQty() - dto.getQty();
+        inbound.setRemainingQty(remaining);
+
+        // 6. 잔여 수량이 0이면 출고 완료 처리
+        if (remaining <= 0) {
+            inbound.setIsOutboundProcessed(true);
+        }
+
         salesInboundRepository.save(inbound);
     }
 

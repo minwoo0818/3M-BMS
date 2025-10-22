@@ -25,6 +25,8 @@ public class SalesOutboundListDto {
     private String classification;      // 분류
     private Boolean isOutboundDone;     // 출고 여부
 
+    // ⭐️ 새로 추가된 잔여 수량 필드 ⭐️
+    private Integer remainingQty;
 
     // 조회용 변환: SalesInbound만 받아서 DTO로 변환
     public static SalesOutboundListDto fromInbound(SalesInbound inbound) {
@@ -38,7 +40,8 @@ public class SalesOutboundListDto {
                 .qty(inbound.getQty())
                 .classification(inbound.getItem().getClassification())
                 .isOutboundDone(inbound.getIsOutboundProcessed())
-
+                // ⭐️ SalesInbound 엔티티의 remainingQty 값을 DTO에 담아 반환 ⭐️
+                .remainingQty(inbound.getRemainingQty())
                 .build();
     }
 
@@ -54,7 +57,8 @@ public class SalesOutboundListDto {
                 .qty(inbound.getQty())
                 .classification(inbound.getItem().getClassification())
                 .isOutboundDone(outbound != null)
-
+                // ⭐️ SalesInbound 엔티티의 remainingQty 값을 DTO에 담아 반환 ⭐️
+                .remainingQty(inbound.getRemainingQty())
                 .build();
     }
 }

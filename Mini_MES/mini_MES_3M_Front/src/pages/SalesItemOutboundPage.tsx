@@ -18,15 +18,24 @@ const SalesItemOutboundPage: React.FC = () => {
     [key: string]: { qty: string; date: string };
   }>({});
   const [data, setData] = useState<SalesOutboundListDto[]>([]); // 🔹 백엔드에서 받아올 출고 대상 리스트
+  const [totalPages, setTotalPages] = useState(1);
 
-  // 출고 대상 입고 항목 조회
-  useEffect(() => {
+  // 출고 대상 입고 항목 조회 함수: 백엔드의 /order/outbound/list GET 경로 호출
+  const fetchInboundList = () => {
     fetch(
-      `${API_BASE_URL}/order/outbound/register?page=${currentPage}&limit=10&searchType=${searchType}&searchTerm=${searchKeyword}`
+      `${API_BASE_URL}/order/outbound/list?page=${currentPage}&limit=10&searchType=${searchType}&searchTerm=${searchKeyword}`
     )
       .then((res) => res.json())
-      .then((data) => setData(data.content)) // Page 객체의 content 배열
+      .then((data) => {
+        setData(data.content);
+        setTotalPages(data.totalPages);
+      })
       .catch((err) => console.error("출고 대상 조회 실패:", err));
+  };
+
+  // 컴포넌트 마운트 및 상태 변경 시 데이터 호출
+  useEffect(() => {
+    fetchInboundList();
   }, [currentPage, searchType, searchKeyword]);
 
   // const data = [
@@ -63,9 +72,27 @@ const SalesItemOutboundPage: React.FC = () => {
   // };
 
   const handleRegister = (inboundId: number) => {
+    const idString = String(inboundId);
     const { qty, date } = formValues[inboundId] || {};
     if (!qty || !date) {
       alert("출고 수량과 출고 일자를 입력해주세요.");
+      return;
+    }
+
+    // 잔여 수량 체크 (프론트엔드 방어 로직)
+    const currentItem = data.find((item) => item.inboundId === inboundId);
+    const parsedQty = parseInt(qty);
+
+    if (isNaN(parsedQty) || parsedQty <= 0) {
+      alert("유효한 출고 수량을 입력해주세요.");
+      return;
+    }
+
+    // ⭐️ 잔여 수량 초과 등록 방지 로직은 유지 ⭐️
+    if (currentItem && parsedQty > currentItem.remainingQty) {
+      alert(
+        `출고 수량(${parsedQty})이 잔여 수량(${currentItem.remainingQty})보다 많습니다.`
+      );
       return;
     }
 
@@ -78,7 +105,7 @@ const SalesItemOutboundPage: React.FC = () => {
       })
     );
 
-    fetch(`${API_BASE_URL}/order/outbound/register`, {
+    fetch(`${API_BASE_URL}/order/outbound/list/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -96,7 +123,7 @@ const SalesItemOutboundPage: React.FC = () => {
             [inboundId]: { qty: "", date: "" },
           }));
           fetch(
-            `${API_BASE_URL}/order/outbound/register?page=${currentPage}&limit=10&searchType=${searchType}&searchTerm=${searchKeyword}`
+            `${API_BASE_URL}/order/outbound/list?page=${currentPage}&limit=10&searchType=${searchType}&searchTerm=${searchKeyword}`
           )
             .then((res) => res.json())
             .then((data) => setData(data.content));
@@ -224,6 +251,15 @@ const SalesItemOutboundPage: React.FC = () => {
               <th
                 style={{
                   ...common.th(false, false),
+                  width: "200px",
+                  padding: "10px",
+                }}
+              >
+                남은 수량
+              </th>
+              <th
+                style={{
+                  ...common.th(false, false),
                   width: "100px",
                   padding: "10px",
                 }}
@@ -277,6 +313,9 @@ const SalesItemOutboundPage: React.FC = () => {
                 </td>
                 <td style={{ ...common.td, width: "140px", padding: "8px" }}>
                   {row.qty} EA
+                </td>
+                <td style={{ ...common.td, width: "140px", padding: "8px" }}>
+                  {row.remainingQty} EA
                 </td>
                 <td style={{ ...common.td, width: "100px", padding: "8px" }}>
                   {row.classification}
@@ -341,7 +380,7 @@ const SalesItemOutboundPage: React.FC = () => {
 
       {/* 페이징 */}
       <div style={common.paginationContainer}>
-        {[1, 2, 3].map((page) => (
+        {[1].map((page) => (
           <button
             key={page}
             style={common.pageButton(currentPage === page)}

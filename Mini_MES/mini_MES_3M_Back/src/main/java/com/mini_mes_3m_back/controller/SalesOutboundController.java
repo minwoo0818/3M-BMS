@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/order/outbound")
+@RequestMapping("/order/outbound/list")
 @RequiredArgsConstructor
 public class SalesOutboundController {
 
@@ -28,7 +28,7 @@ public class SalesOutboundController {
         }
 
     // 출고 대상 입고 리스트 조회
-    @GetMapping("/register")
+    @GetMapping
     public ResponseEntity<Page<SalesOutboundListDto>> getInboundList(
             @RequestParam int page,
             @RequestParam int limit,
