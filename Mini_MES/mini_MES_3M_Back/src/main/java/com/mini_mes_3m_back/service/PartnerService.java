@@ -163,4 +163,22 @@ public class PartnerService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    // --- 활성화된 특정 타입의 파트너 목록 조회 ---
+    @Transactional(readOnly = true)
+    public List<PartnerListRowDataDto> getActivePartnersByType(String partnerType) {
+        List<Partner> partners = partnerRepository.findByPartnerTypeAndActiveTrue(partnerType); // 수정된 리포지토리 메서드 사용
+        return partners.stream()
+                .map(partner -> new PartnerListRowDataDto(
+                        partner.getPartnerId(),
+                        partner.getName(),
+                        partner.getBrNum(),
+                        partner.getAddress(),
+                        partner.getRepresentativeName(),
+                        partner.getRepresentativePhone(),
+                        partner.getActive(),
+                        partner.getPartnerType()
+                ))
+                .collect(Collectors.toList());
+    }
 }
