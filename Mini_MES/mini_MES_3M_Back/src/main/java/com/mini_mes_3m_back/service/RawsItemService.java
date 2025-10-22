@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,17 +37,18 @@ public class RawsItemService {
         Partner supplier = partnerRepository.findById(request.getSupplierId())
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 매입처입니다. ID: " + request.getSupplierId()));
 
-        RawsItem newRawsItem = new RawsItem(
-                request.getItemCode(),
-                request.getItemName(),
-                request.getClassification(),
-                request.getColor(),
-                request.getSpec(),
-                request.getManufacturer(),
-                request.getRemark(),
-                supplier, // Partner 엔티티 직접 할당
-                true // 등록 시 active 기본값 true
-        );
+        // --- (RawsItem 객체 생성)을 Builder 패턴으로 수정! ---
+        RawsItem newRawsItem = RawsItem.builder() // RawsItem.builder() 사용!
+                .itemCode(request.getItemCode())
+                .itemName(request.getItemName())
+                .classification(request.getClassification())
+                .color(request.getColor())
+                .spec(request.getSpec())
+                .manufacturer(request.getManufacturer())
+                .remark(request.getRemark())
+                .supplier(supplier) // Partner 엔티티 직접 할당
+                .active(true) // 등록 시 active 기본값 true (엔티티의 @Builder.Default가 있으나 명시적으로 설정도 가능)
+                .build(); // .build()로 마무리!
 
         RawsItem savedRawsItem = rawsItemRepository.save(newRawsItem);
 
@@ -82,13 +84,14 @@ public class RawsItemService {
                 .collect(Collectors.toList());
     }
 
-    // --- 3. 원자재 품목 상세 조회 ---
+    // --- 3. 원자재 품목 상세 조회 (메서드명 변경 없고 DTO 이름만 변경) ---
     @Transactional(readOnly = true)
-    public RawsItemDetailResponseDto getRawsItemDetailById(Long rawsItemId) {
+    public RawsItemResponseDto getRawsItemDetailById(Long rawsItemId) { // DTO 이름 변경!
         RawsItem rawsItem = rawsItemRepository.findById(rawsItemId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 원자재 품목입니다. ID: " + rawsItemId));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 원자재 품목입니다. ID: " + rawsItemId));
 
-        return new RawsItemDetailResponseDto(
+        // DTO의 필드에 맞춰 매핑
+        return new RawsItemResponseDto( // DTO 이름 변경!
                 rawsItem.getRawsItemId(),
                 rawsItem.getItemCode(),
                 rawsItem.getItemName(),
@@ -99,15 +102,17 @@ public class RawsItemService {
                 rawsItem.getRemark(),
                 rawsItem.getSupplier().getPartnerId(),
                 rawsItem.getSupplier().getName(),
-                rawsItem.getActive()
+                rawsItem.getActive(),
+                rawsItem.getCreatedAt(),
+                rawsItem.getUpdatedAt()
         );
     }
 
-    // --- 4. 원자재 품목 정보 수정 ---
+    // --- 4. 원자재 품목 정보 수정 (메서드명 변경 없고 DTO 이름만 변경) ---
     @Transactional
-    public RawsItemDetailResponseDto updateRawsItem(Long rawsItemId, RawsItemUpdateRequestDto request) {
+    public RawsItemResponseDto updateRawsItem(Long rawsItemId, RawsItemUpdateRequestDto request) { // DTO 이름 변경!
         RawsItem rawsItem = rawsItemRepository.findById(rawsItemId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 원자재 품목입니다. ID: " + rawsItemId));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 원자재 품목입니다. ID: " + rawsItemId));
 
         // 품목번호 변경 시 중복 확인 (기존 품목번호와 다를 경우에만)
         if (!rawsItem.getItemCode().equals(request.getItemCode())) {
@@ -127,12 +132,13 @@ public class RawsItemService {
         rawsItem.setSpec(request.getSpec());
         rawsItem.setManufacturer(request.getManufacturer());
         rawsItem.setRemark(request.getRemark());
-        rawsItem.setSupplier(supplier);
+        rawsItem.setSupplier(supplier); // 매입처도 업데이트
         rawsItem.setActive(request.getActive());
 
         RawsItem updatedRawsItem = rawsItemRepository.save(rawsItem);
 
-        return new RawsItemDetailResponseDto(
+        // DTO의 필드에 맞춰 매핑
+        return new RawsItemResponseDto( // DTO 이름 변경!
                 updatedRawsItem.getRawsItemId(),
                 updatedRawsItem.getItemCode(),
                 updatedRawsItem.getItemName(),
@@ -143,7 +149,9 @@ public class RawsItemService {
                 updatedRawsItem.getRemark(),
                 updatedRawsItem.getSupplier().getPartnerId(),
                 updatedRawsItem.getSupplier().getName(),
-                updatedRawsItem.getActive()
+                updatedRawsItem.getActive(),
+                updatedRawsItem.getCreatedAt(),
+                updatedRawsItem.getUpdatedAt()
         );
     }
 

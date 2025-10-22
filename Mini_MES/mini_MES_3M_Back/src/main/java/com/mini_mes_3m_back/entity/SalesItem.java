@@ -39,9 +39,13 @@ public class SalesItem {
     private String color;
     private String coatingMethod;
     private Integer totalOperations = 0;
+
     @Column(columnDefinition = "text")
     private String remark;
-    private Boolean active = true;
+
+    @Column(name = "active", nullable = false) // 'active' 컬럼에 NULL을 허용하지 않도록 설정
+    @Builder.Default // Builder 패턴으로 객체 생성 시 이 필드의 기본값을 true로 설정하도록 명시
+    private Boolean active = true; // 자바 코드에서의 기본값 유지
     private OffsetDateTime createdAt;
 
     private String imagePath;

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/raws-items")
@@ -45,14 +46,14 @@ public class RawsItemController {
         }
     }
 
-    // --- 3. 원자재 품목 상세 조회 ---
-    @GetMapping("/{rawsItemId}/detail")
-    public ResponseEntity<RawsItemDetailResponseDto> getRawsItemDetailById(@PathVariable Long rawsItemId) {
+    // --- 3. 원자재 품목 상세 조회 --- (메서드명은 Service에 맞추어 변경)
+    @GetMapping("/{rawsItemId}")
+    public ResponseEntity<RawsItemResponseDto> getRawsItemById(@PathVariable Long rawsItemId) { // DTO 이름 변경!
         try {
-            RawsItemDetailResponseDto rawsItem = rawsItemService.getRawsItemDetailById(rawsItemId);
-            return ResponseEntity.ok(rawsItem);
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            RawsItemResponseDto detail = rawsItemService.getRawsItemDetailById(rawsItemId); // Service 메서드명 일치!
+            return ResponseEntity.ok(detail);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND); // 404 Not Found
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -60,14 +61,16 @@ public class RawsItemController {
 
     // --- 4. 원자재 품목 정보 수정 ---
     @PutMapping("/{rawsItemId}")
-    public ResponseEntity<RawsItemDetailResponseDto> updateRawsItem(
-            @PathVariable Long rawsItemId,
-            @Valid @RequestBody RawsItemUpdateRequestDto request) {
+    public ResponseEntity<RawsItemResponseDto> updateRawsItem( // DTO 이름 변경!
+                                                               @PathVariable Long rawsItemId,
+                                                               @Valid @RequestBody RawsItemUpdateRequestDto request) {
         try {
-            RawsItemDetailResponseDto updatedItem = rawsItemService.updateRawsItem(rawsItemId, request);
-            return ResponseEntity.ok(updatedItem);
+            RawsItemResponseDto updated = rawsItemService.updateRawsItem(rawsItemId, request); // Service 메서드명 일치!
+            return ResponseEntity.ok(updated);
+        } catch (NoSuchElementException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND); // 404 Not Found
         } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST); // 잘못된 요청 (예: 유효성 검사 실패, 매입처 없음 등)
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }

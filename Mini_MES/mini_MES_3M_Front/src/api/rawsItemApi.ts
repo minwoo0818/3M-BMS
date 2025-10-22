@@ -1,6 +1,6 @@
 // src/api/rawsItemsApi.ts (새로 생성!)
 import axios from 'axios';
-import type { RawsItemRegistrationData, RawsItemPartialData, RawsItemDetailData, RawsItemUpdateData, RawsItemUpdateStatusRequest } from '../types/RawsItemTypes';
+import type { RawsItemRegistrationData, RawsItemPartialData, RawsItemDetailData, RawsItemUpdateData, RawsItemUpdateStatusRequest, RawsItemDetail, RawsItemUpdateRequest } from '../types/RawsItemTypes';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -31,25 +31,26 @@ export const getAllRawsItems = async (): Promise<RawsItemPartialData[]> => {
 };
 
 /**
- * 특정 ID의 원자재 품목 상세 정보를 조회합니다.
- * @param rawsItemId 조회할 원자재 품목의 고유 ID
- * @returns RawsItemDetailData 형식의 상세 정보
+ * 특정 원자재 품목의 상세 정보를 조회합니다.
+ * @param rawsItemId 조회할 원자재 품목의 ID
+ * @returns RawsItemDetail 형식의 상세 정보
  */
-export const getRawsItemDetail = async (rawsItemId: number): Promise<RawsItemDetailData> => {
-  const response = await api.get<RawsItemDetailData>(`/raws-items/${rawsItemId}/detail`);
+export const getRawsItemById = async (rawsItemId: number): Promise<RawsItemDetail> => { // 함수명 변경!
+  const response = await api.get<RawsItemDetail>(`/raws-items/${rawsItemId}`);
   return response.data;
 };
 
 /**
- * 특정 ID의 원자재 품목 정보를 업데이트합니다.
- * @param rawsItemId 업데이트할 원자재 품목의 고유 ID
- * @param rawsItemData 업데이트할 원자재의 데이터 (rawsItemId, supplierName 제외)
- * @returns 업데이트된 원자재의 상세 정보 (RawsItemDetailData 형식)
+ * 특정 원자재 품목의 정보를 수정합니다.
+ * @param rawsItemId 수정할 원자재 품목의 ID
+ * @param requestData 수정 요청 데이터 (RawsItemUpdateRequest 형식)
+ * @returns 수정된 원자재 품목 상세 정보 (RawsItemDetail 형식)
  */
-export const updateRawsItem = async (rawsItemId: number, rawsItemData: RawsItemUpdateData): Promise<RawsItemDetailData> => {
-  const response = await api.put<RawsItemDetailData>(`/raws-items/${rawsItemId}`, rawsItemData);
+export const updateRawsItem = async (rawsItemId: number, requestData: RawsItemUpdateRequest): Promise<RawsItemDetail> => {
+  const response = await api.put<RawsItemDetail>(`/raws-items/${rawsItemId}`, requestData);
   return response.data;
 };
+
 
 /**
  * 특정 ID의 원자재 품목 활성 상태 (active)를 업데이트합니다.
