@@ -1,12 +1,11 @@
 package com.mini_mes_3m_back.controller;
 
-import com.mini_mes_3m_back.dto.SalesItemRegisterDto;
-import com.mini_mes_3m_back.dto.SalesItemSearchDto;
-import com.mini_mes_3m_back.entity.Operations;
+import com.mini_mes_3m_back.dto.*;
 import com.mini_mes_3m_back.service.SalesItemService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,53 +16,31 @@ public class SalesItemController {
 
     private final SalesItemService salesItemService;
 
-    // ==============================
-    // 1️⃣ 수주품목 등록
-    // ==============================
-    @PostMapping
-    public ResponseEntity<SalesItemRegisterDto> createSalesItem(@RequestBody SalesItemRegisterDto dto) {
-        SalesItemRegisterDto saved = salesItemService.createSalesItem(dto);
-        return ResponseEntity.ok(saved);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<SalesItemRegisterDto> createSalesItem(
+            @RequestPart("data") SalesItemRegisterDto dto,
+            @RequestPart(value = "file", required = false) MultipartFile file) {
+        SalesItemRegisterDto result = salesItemService.createSalesItemWithImage(dto, file);
+        return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
 
-    // ==============================
-    // 2️⃣ 전체 조회 (조회용 DTO)
-    // ==============================
     @GetMapping
     public ResponseEntity<List<SalesItemSearchDto>> getAllSalesItems() {
-        List<SalesItemSearchDto> list = salesItemService.getAllSalesItemsForSearch();
-        return ResponseEntity.ok(list);
+        List<SalesItemSearchDto> items = salesItemService.getAllSalesItemsForSearch();
+        return ResponseEntity.ok(items);
     }
 
-    // ==============================
-    // 3️⃣ 이름 검색 (조회용 DTO)
-    // ==============================
-    @GetMapping("/search")
-    public ResponseEntity<List<SalesItemSearchDto>> searchSalesItems(@RequestParam String itemName) {
-        List<SalesItemSearchDto> list = salesItemService.searchSalesItemsByName(itemName);
-        return ResponseEntity.ok(list);
-    }
-
-    // ==============================
-    // 4️⃣ 공정 검색
-    // ==============================
-    @GetMapping("/operations/search")
-    public ResponseEntity<List<Operations>> searchOperations(@RequestParam String keyword) {
-        return ResponseEntity.ok(salesItemService.searchOperations(keyword));
-    }
-
-    // ==============================
-    // 5️⃣ 거래 상태 변경
-    // ==============================
-    @PatchMapping("/{id}/resume")
-    public ResponseEntity<Void> resumeTrade(@PathVariable Long id) {
-        salesItemService.resumeTrade(id);
+    @PutMapping("/{salesItemId}/active")
+    public ResponseEntity<Void> updateActive(
+            @PathVariable Long salesItemId,
+            @RequestBody SalesItemUpdateStatusRequestDto requestDto) {
+        salesItemService.updateSalesItemActive(salesItemId, requestDto.getActive());
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/{id}/stop")
-    public ResponseEntity<Void> stopTrade(@PathVariable Long id) {
-        salesItemService.stopTrade(id);
-        return ResponseEntity.ok().build();
+    @GetMapping("/{salesItemId}")
+    public ResponseEntity<SalesItemDetailDto> getSalesItemDetail(@PathVariable Long salesItemId) {
+        SalesItemDetailDto detail = salesItemService.getSalesItemDetail(salesItemId);
+        return ResponseEntity.ok(detail);
     }
 }

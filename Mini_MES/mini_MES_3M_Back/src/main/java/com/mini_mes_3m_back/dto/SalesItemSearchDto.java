@@ -9,11 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SalesItemSearchDto {
 
+    private Long salesItemId; // 각 행 식별용 ID
     // 1. 업체 정보
     private Long partnerId;                       // 요청용: 선택된 partner ID
     // private PartnerPartialResponseDto partner;    // 응답용: 업체 정보 DTO
 
     // 2. 품목 정보
+    private String partnerName;    // 거래처명
     private String itemCode;       // 품목번호
     private String itemName;       // 품목명
     private String classification; // 분류

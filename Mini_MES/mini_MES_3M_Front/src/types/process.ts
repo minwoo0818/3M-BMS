@@ -1,5 +1,5 @@
 // 테이블에 표시될 공정 항목의 타입
-export type ProcessItem = {
+export interface ProcessItem {
   no: number;
   processCode: string;
   processName: string;

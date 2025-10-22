@@ -1,14 +1,15 @@
 package com.mini_mes_3m_back.service;
 
 import com.mini_mes_3m_back.dto.*;
-import com.mini_mes_3m_back.dto.Partner.PartnerPartialResponseDto;
 import com.mini_mes_3m_back.entity.*;
 import com.mini_mes_3m_back.repository.*;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,11 +22,16 @@ public class SalesItemService {
     private final OperationsRepository operationsRepository;
     private final SalesItemOperationRepository salesItemOperationRepository;
 
-    // ==============================
-    // 1️⃣ 수주품목 등록
-    // ==============================
     @Transactional
-    public SalesItemRegisterDto createSalesItem(SalesItemRegisterDto dto) {
+    public void updateSalesItemActive(Long salesItemId, Boolean active) {
+        SalesItem item = salesItemRepository.findById(salesItemId)
+                .orElseThrow(() -> new RuntimeException("SalesItem not found: " + salesItemId));
+        item.setActive(active);
+        salesItemRepository.save(item);
+    }
+
+    @Transactional
+    public SalesItemRegisterDto createSalesItemWithImage(SalesItemRegisterDto dto, MultipartFile file) {
         Partner partner = null;
         if (dto.getPartnerId() != null) {
             partner = partnerRepository.findById(dto.getPartnerId())
@@ -44,6 +50,22 @@ public class SalesItemService {
                 .remark(dto.getRemark())
                 .build();
 
+        // 이미지 파일 저장
+        if (file != null && !file.isEmpty()) {
+            try {
+                String uploadDir = "uploads/sales-items";
+                Files.createDirectories(Paths.get(uploadDir));
+
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                Path filePath = Paths.get(uploadDir).resolve(fileName);
+
+                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+                salesItem.setImagePath(filePath.toString());
+            } catch (IOException e) {
+                throw new RuntimeException("이미지 업로드 실패", e);
+            }
+        }
+
         // 공정 매핑
         if (dto.getOperationIds() != null && !dto.getOperationIds().isEmpty()) {
             List<Operations> operations = operationsRepository.findAllById(dto.getOperationIds());
@@ -61,13 +83,10 @@ public class SalesItemService {
             salesItem.setTotalOperations(itemOperations.size());
         }
 
-        SalesItem saved = salesItemRepository.save(salesItem);
-        return mapToRegisterDto(saved); // 등록용 DTO 변환
+        SalesItem saved = salesItemRepository.saveAndFlush(salesItem);
+        return mapToRegisterDto(saved);
     }
 
-    // ==============================
-    // 2️⃣ 전체 조회 (조회용 DTO 사용)
-    // ==============================
     @Transactional(readOnly = true)
     public List<SalesItemSearchDto> getAllSalesItemsForSearch() {
         return salesItemRepository.findAll().stream()
@@ -75,31 +94,13 @@ public class SalesItemService {
                 .collect(Collectors.toList());
     }
 
-    // 이름 검색
     @Transactional(readOnly = true)
-    public List<SalesItemSearchDto> searchSalesItemsByName(String itemName) {
-        return salesItemRepository.findByItemNameContainingIgnoreCase(itemName, Pageable.unpaged())
-                .stream()
-                .map(this::mapToSearchDto)
-                .collect(Collectors.toList());
-    }
+    public SalesItemDetailDto getSalesItemDetail(Long id) {
+        SalesItem item = salesItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Item not found"));
 
-    // 공정 검색
-    @Transactional(readOnly = true)
-    public List<Operations> searchOperations(String keyword) {
-        return operationsRepository.findAll().stream()
-                .filter(op -> op.getCode().contains(keyword)
-                        || op.getName().contains(keyword)
-                        || (op.getDescription() != null && op.getDescription().contains(keyword)))
-                .collect(Collectors.toList());
-    }
-
-    // ==============================
-    // 3️⃣ 등록용 DTO 변환
-    // ==============================
-    private SalesItemRegisterDto mapToRegisterDto(SalesItem item) {
         List<SalesItemOperation> operations =
-                salesItemOperationRepository.findBySalesItem_SalesItemIdOrderBySeqAsc(item.getSalesItemId());
+                salesItemOperationRepository.findBySalesItem_SalesItemIdOrderBySeqAsc(id);
 
         List<OperationDto> operationDtos = operations.stream()
                 .map(o -> new OperationDto(
@@ -111,8 +112,27 @@ public class SalesItemService {
                 ))
                 .collect(Collectors.toList());
 
-        List<Long> operationIds = operationDtos.stream()
-                .map(OperationDto::getOperationId)
+        return new SalesItemDetailDto(
+                item.getSalesItemId(),
+                item.getPartnerName(),
+                item.getItemCode(),
+                item.getItemName(),
+                item.getClassification(),
+                item.getPrice(),
+                item.getColor(),
+                item.getCoatingMethod(),
+                item.getRemark(),
+                item.getImagePath(),
+                operationDtos
+        );
+    }
+
+    private SalesItemRegisterDto mapToRegisterDto(SalesItem item) {
+        List<SalesItemOperation> operations =
+                salesItemOperationRepository.findBySalesItem_SalesItemIdOrderBySeqAsc(item.getSalesItemId());
+
+        List<Long> operationIds = operations.stream()
+                .map(o -> o.getOperation().getOperationId())
                 .collect(Collectors.toList());
 
         return new SalesItemRegisterDto(
@@ -128,38 +148,18 @@ public class SalesItemService {
         );
     }
 
-    // ==============================
-    // 4️⃣ 조회용 DTO 변환
-    // ==============================
     private SalesItemSearchDto mapToSearchDto(SalesItem item) {
         return new SalesItemSearchDto(
+                item.getSalesItemId(),
                 item.getPartner() != null ? item.getPartner().getPartnerId() : null,
+                item.getPartner() != null ? item.getPartner().getName() : null,
                 item.getItemCode(),
                 item.getItemName(),
                 item.getClassification(),
                 item.getPrice(),
                 item.getCoatingMethod(),
                 item.getRemark(),
-                item.getActive() // 거래상태
+                item.getActive()
         );
-    }
-
-    // ==============================
-    // 5️⃣ 거래 상태 변경
-    // ==============================
-    @Transactional
-    public void resumeTrade(Long id) {
-        SalesItem item = salesItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
-        item.setActive(true);
-        salesItemRepository.save(item);
-    }
-
-    @Transactional
-    public void stopTrade(Long id) {
-        SalesItem item = salesItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
-        item.setActive(false);
-        salesItemRepository.save(item);
     }
 }
