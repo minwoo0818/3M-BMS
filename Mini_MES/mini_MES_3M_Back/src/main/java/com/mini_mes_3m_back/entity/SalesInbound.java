@@ -36,7 +36,9 @@ public class SalesInbound {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
+
     private Boolean isCancelled = false;
+
     private Boolean isOutboundProcessed = false;
 
     @PrePersist
@@ -44,6 +46,13 @@ public class SalesInbound {
         createdAt = OffsetDateTime.now();
         if (updatedAt == null) { // updatedAt이 이미 설정되어 있지 않다면 (새로운 엔티티일 경우)
             updatedAt = createdAt;
+        }
+
+        if (isCancelled == null) {
+            isCancelled = false;
+        }
+        if (isOutboundProcessed == null) {
+            isOutboundProcessed = false;
         }
     }
 
