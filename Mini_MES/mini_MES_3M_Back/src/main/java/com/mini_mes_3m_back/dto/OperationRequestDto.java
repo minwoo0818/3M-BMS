@@ -10,8 +10,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-
-
 public class OperationRequestDto {
 
     @NotBlank(message = "공정 코드는 필수 입력 항목입니다.")

@@ -1,6 +1,8 @@
 package com.mini_mes_3m_back.repository;
 
 import com.mini_mes_3m_back.entity.SalesInbound;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +15,22 @@ public interface SalesInboundRepository extends JpaRepository<SalesInbound, Long
     // 특정 날짜의 LOT 번호 자동 부여를 위한 count
     long countByInboundLOTNumStartingWith(String prefix); // inboundLOTNum 필드명에 맞게 변경!
 
+    // 기타 필요한 조회 메서드 추가 가능
+
+    //수주품목 출고 등록할때 조회
+    Page<SalesInbound> findByQtyAndIsCancelledFalseAndIsOutboundProcessedFalse(int qty, Pageable pageable);
+
+    Page<SalesInbound> findByInboundLOTNumContainingAndIsCancelledFalseAndIsOutboundProcessedFalse(String lotNum, Pageable pageable);
+
+    Page<SalesInbound> findByItem_ItemNameContainingAndIsCancelledFalseAndIsOutboundProcessedFalse(String itemName, Pageable pageable);
+
+    Page<SalesInbound> findByItem_ItemCodeContainingAndIsCancelledFalseAndIsOutboundProcessedFalse(String itemCode, Pageable pageable);
+
+    Page<SalesInbound> findByItem_PartnerNameContainingAndIsCancelledFalseAndIsOutboundProcessedFalse(String partnerName, Pageable pageable);
+
+    Page<SalesInbound> findByReceivedAtAndIsCancelledFalseAndIsOutboundProcessedFalse(LocalDate receivedAt, Pageable pageable);
+
+    Page<SalesInbound> findByIsCancelledFalseAndIsOutboundProcessedFalse(Pageable pageable);
     // 입고 이력 목록 조회 (SalesItem과 Partner를 함께 가져옴)
     @Query("SELECT si FROM SalesInbound si JOIN FETCH si.item salesItem JOIN FETCH salesItem.partner partner " +
             "WHERE si.isCancelled = false " + // 취소되지 않은 입고만 조회
