@@ -16,7 +16,7 @@ export const menuItems = [
       {
         name: "수주품목 출고", // 2 depth
         items: [
-          { name: "수주품목 출고 등록", path: "/order/outbound/register" },
+          { name: "수주품목 출고 등록", path: "/order/outbound/list" },
           { name: "수주품목 출고 이력조회", path: "/order/history/outbound" },
         ],
       },

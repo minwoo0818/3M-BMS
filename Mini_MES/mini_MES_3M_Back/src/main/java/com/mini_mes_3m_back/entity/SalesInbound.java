@@ -30,6 +30,10 @@ public class SalesInbound {
     @Column(nullable = false)
     private Integer qty;
 
+    // ✅ 새로 추가
+    @Column(nullable = false)
+    private Integer remainingQty;
+
     @Column(nullable = false)
     private LocalDate receivedAt;
 
@@ -51,6 +55,10 @@ public class SalesInbound {
         if (updatedAt == null) {
             updatedAt = createdAt;
         }
+
+        // ✅ 신규 등록 시 잔여 수량 = 입고 수량
+        if (remainingQty == null) remainingQty = qty;
+
         // @Builder.Default와 @Column(nullable=false)로 대부분 해결되므로, 여기서의 추가 null 체크는 선택적.
         // 하지만 혹시 모를 상황을 대비해 아래와 같이 null 체크 로직을 유지하는 것도 좋음
         if (isCancelled == null) { // Builder 또는 외부에서 null로 설정했을 경우 대비 (방어적)
