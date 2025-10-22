@@ -8,7 +8,7 @@ import {
     type SelectChangeEvent,
 } from "@mui/material";
 import React, { useState, useMemo, type ChangeEvent, type FormEvent, useCallback } from "react";
-import { registerSalesItem } from "../apis/salesItemApi";
+import { registerSalesItem } from "../api/salesItemApi";
 
 // ⭐️ Back-end Operations Entity에 맞춰 ID 추가
 interface ProcessItem {

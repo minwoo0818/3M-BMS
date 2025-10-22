@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useCommonStyles } from "../style/useCommonStyles";
 import { useSalesHistoryStyles } from "../style/useSalesHistoryStyles";
 import { useNavigate } from "react-router-dom";
-import { fetchSalesItems, updateSalesItemActive } from "../apis/salesItemApi";
-import type { SalesItem } from "../apis/salesItemApi";
+import { fetchSalesItems, updateSalesItemActive } from "../api/salesItemApi";
+import type { SalesItem } from "../api/salesItemApi";
 
 interface ItemData extends SalesItem {
   ACTIVE: "Y" | "N";

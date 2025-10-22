@@ -12,6 +12,5 @@ public interface PartnerRepository extends JpaRepository<Partner, Long> {
     List<Partner> findByActiveTrue();
     Optional<Partner> findByName(String name);
     List<Partner> findByPartnerType(String partnerType);
-    List<Partner> findByActiveTrue();
 
 }
