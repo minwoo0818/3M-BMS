@@ -74,3 +74,16 @@ export const getPartnersList = async (partnerType: 'customer' | 'supplier'): Pro
   });
   return response.data;
 };
+
+/**
+ * 활성화된 특정 타입의 파트너 목록(부분 정보)을 조회합니다.
+ * 'customer' 또는 'supplier'를 파라미터로 넘겨 필터링합니다.
+ * @param partnerType 조회할 파트너의 유형 ('customer' 또는 'supplier')
+ * @returns PartnerListRowData 배열 (active = true)
+ */
+export const getActivePartnersByType = async (partnerType: 'customer' | 'supplier'): Promise<PartnerListRowData[]> => {
+  const response = await api.get<PartnerListRowData[]>('/partners/active-by-type', {
+    params: { partnerType },
+  });
+  return response.data;
+};

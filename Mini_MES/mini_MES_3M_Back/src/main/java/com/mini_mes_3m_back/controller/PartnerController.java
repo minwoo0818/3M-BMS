@@ -75,4 +75,16 @@ public class PartnerController {
         List<PartnerPartialResponseDto> partners = partnerService.getAllActivePartners();
         return ResponseEntity.ok(partners);
     }
+
+    // --- 활성화된 특정 타입의 파트너 목록 조회 ---
+    @GetMapping("/active-by-type")
+    public ResponseEntity<List<PartnerListRowDataDto>> getActivePartnersByType(
+            @RequestParam("partnerType") String partnerType) {
+        try {
+            List<PartnerListRowDataDto> partners = partnerService.getActivePartnersByType(partnerType);
+            return ResponseEntity.ok(partners);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
