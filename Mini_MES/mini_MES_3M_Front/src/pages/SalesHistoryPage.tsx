@@ -772,9 +772,9 @@ export default function SalesHistoryQueryPage() {
                                 variant="contained"
                                 color="success"
                                 size="small"
-                                onClick={() =>
-                                  handleOutboundDelete(item.inboundId)
-                                }
+                                // onClick={() =>
+                                //   handleOutboundDelete(item.inboundId)
+                                // }
                                 disabled={item.isCancelled}
                                 sx={{ fontSize: "0.7rem" }}
                               >
