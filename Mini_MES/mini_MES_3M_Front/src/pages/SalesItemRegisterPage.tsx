@@ -9,6 +9,7 @@ import React, { useState, useMemo, type ChangeEvent, type FormEvent, useCallback
 // ⭐️ [추가/수정] 공정 조회 API 및 타입 import
 import { registerSalesItem, fetchActivePartners, fetchAllOperations } from "../api/salesItemApi"; 
 import type { OperationResponseDto } from "../api/salesItemApi.ts";
+import { getActivePartnersByType } from "../api/partnersApi.ts";
 
 // Back-end Operations Entity에 맞춰 ID 추가 (프론트엔드에서 사용할 일관된 이름)
 interface ProcessItem {
@@ -64,7 +65,7 @@ const SalesItemRegisterPage: React.FC = () => {
         try {
             // API에서 정의한 fetchActivePartners를 호출하지만, 반환되는 데이터 구조가
             // { partnerId: number, name: string } 형태라고 가정하고 처리
-            const partnersData = await fetchActivePartners();
+            const partnersData = await getActivePartnersByType('customer');
             
             // 💡 [핵심 수정 부분] 만약 API가 CustomPartnerSelectResponseDto 형식으로 데이터를 반환한다면,
             // (즉, partnerName이 아닌 name으로 반환한다면) 아래와 같이 매핑하거나,

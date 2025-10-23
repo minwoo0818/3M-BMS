@@ -81,11 +81,11 @@ public class SalesItemController {
         return ResponseEntity.ok().build();
     }
     // 등록용: 활성 거래처만
-    @GetMapping("/partners/active")
-    public ResponseEntity<List<PartnerSelectResponseDto>> getActivePartners() {
-        List<PartnerSelectResponseDto> partners = salesItemService.getActivePartners();
-        return ResponseEntity.ok(partners);
-    }
+//    @GetMapping("/partners/active")
+//    public ResponseEntity<List<PartnerSelectResponseDto>> getActivePartners() {
+//        List<PartnerSelectResponseDto> partners = salesItemService.getActivePartners();
+//        return ResponseEntity.ok(partners);
+//    }
 
     // 상세조회용: 전체 거래처
     @GetMapping("/partners/all")
