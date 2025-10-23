@@ -19,6 +19,7 @@ public class SalesInboundHistoryResponseDto {
     private String itemCode; // 품목 번호
     private String itemName; // 품목명
     private String classification; // 분류
+    private String coatingMethod; // 도장방식
     private String inboundLOTNum; // 입고 LOT 번호
     private Integer qty; // 입고 수량
     private LocalDate receivedAt; // 입고 일자

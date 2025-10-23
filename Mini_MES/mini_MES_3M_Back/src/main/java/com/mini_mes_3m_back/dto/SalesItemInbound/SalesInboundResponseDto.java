@@ -20,4 +20,5 @@ public class SalesInboundResponseDto {
     private LocalDate receivedAt; // 입고 일자 (미누 엔티티에 맞춰 변경!)
     private String inboundLOTNum; // LOT 번호 (미누 엔티티에 맞춰 변경!)
     private OffsetDateTime createdAt;
+    private String coatingMethod; // 도장방식
 }
