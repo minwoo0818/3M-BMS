@@ -201,7 +201,7 @@ const SalesItemViewPage: React.FC = () => {
               <tr key={row.salesItemId ?? `row-${index}`}>
                 <td style={{ ...common.td }}>{index + 1}</td>
                 <td style={{ ...common.td }}>{row.partnerName}</td>
-                <td style={{ ...common.td }}>{row.itemCode}</td>
+                <td style={{ ...common.td }}>{row.itemName}</td>
                 <td
                   style={{
                     ...common.td,
@@ -212,7 +212,7 @@ const SalesItemViewPage: React.FC = () => {
                   }}
                   onClick={() => handleItemClick(row.salesItemId)}
                 >
-                  {row.itemName}
+                  {row.itemCode}
                 </td>
                 <td style={{ ...common.td }}>{row.classification}</td>
                 <td style={{ ...common.td }}>{row.price}</td>
