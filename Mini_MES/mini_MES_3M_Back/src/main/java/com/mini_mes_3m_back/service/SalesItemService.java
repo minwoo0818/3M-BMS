@@ -36,6 +36,10 @@ public class SalesItemService {
     @Value("${file.upload-dir}")
     private String uploadDir;
 
+    // ⭐ 2. 웹에서 접근 가능한 가상 경로 (WebConfig 설정과 일치해야 함)
+    // /uploads/
+    private final String VIRTUAL_PATH = "uploads/";
+
     // -------------------
     // 1️⃣ 등록 / 수정
     // -------------------
@@ -190,9 +194,9 @@ public class SalesItemService {
     // 수정 (상세조회 페이지 내에서만)
     // --------------------
     @Transactional
-    public SalesItemRegisterDto updateSalesItem(Long id, SalesItemRegisterDto dto) {
+    public SalesItemRegisterDto updateSalesItem(Long id, SalesItemRegisterDto dto, MultipartFile file) { // 💡 file 파라미터 추가
         // =========================================================
-        // 💡 1. operationIds JSON String을 List<Long>으로 변환 (추가된 로직)
+        // 1. operationIds JSON String을 List<Long>으로 변환 (기존 로직 유지)
         // =========================================================
         List<Long> operationIdList;
         try {
@@ -202,7 +206,6 @@ public class SalesItemService {
                     objectMapper.getTypeFactory().constructCollectionType(List.class, Long.class)
             );
         } catch (Exception e) {
-            // JSON 파싱 실패 시 예외 처리
             throw new IllegalArgumentException("작업 공정 ID (operationIds)가 올바른 JSON 배열 형식이 아닙니다: " + dto.getOperationIds(), e);
         }
 
@@ -212,7 +215,17 @@ public class SalesItemService {
         SalesItem item = salesItemRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("SalesItem not found: " + id));
 
-        // ... (업데이트 로직은 유지)
+        // 💡 2-1. 파일 처리 로직 추가
+        if (file != null && !file.isEmpty()) {
+            // 🚨 실제 파일 저장 로직 (예: 파일 저장소 서비스 호출) 필요
+            // 임시: 파일 이름만 저장한다고 가정
+            String filePath = "uploads/" + file.getOriginalFilename(); // 실제 저장 경로/이름으로 대체
+            item.setImagePath(filePath); // item 엔티티에 파일 정보 업데이트 필드가 있다고 가정
+        }
+        // 파일을 전송하지 않았을 경우: 기존 이미지 유지 또는 삭제 로직 필요 (현재는 유지)
+
+
+        // 2-2. DTO 필드 업데이트 (기존 로직 유지)
         item.setItemName(dto.getItemName());
         item.setItemCode(dto.getItemCode());
         item.setPrice(dto.getPrice());
@@ -222,38 +235,32 @@ public class SalesItemService {
         item.setRemark(dto.getRemark());
 
         // =========================================================
-        // 3. 공정 수정: 변환된 List<Long> 사용 (기존 로직 수정)
+        // 3. 공정 수정 (기존 로직 유지)
         // =========================================================
+        // ... (제공해주신 공정 수정 로직) ...
         List<SalesItemOperation> itemOps = Collections.emptyList();
 
-        // **변환된 operationIdList 사용**
         if (operationIdList != null && !operationIdList.isEmpty()) {
-            // DB에서 공정 정보 조회
             List<Operations> ops = operationsRepository.findAllById(operationIdList);
-            // 빠른 조회를 위해 Map으로 변환
             Map<Long, Operations> operationMap = ops.stream()
                     .collect(Collectors.toMap(Operations::getOperationId, Function.identity()));
 
             itemOps = new ArrayList<>();
             int seq = 1;
 
-            // **변환된 operationIdList의 순서대로 반복**하여 공정 매핑
             for (Long opId : operationIdList) {
-                Operations op = operationMap.get(opId); // Map에서 조회
-
+                Operations op = operationMap.get(opId);
                 if(op == null) {
                     throw new RuntimeException("Operation not found: " + opId);
                 }
-
                 SalesItemOperation sio = new SalesItemOperation();
                 sio.setSalesItem(item);
                 sio.setOperations(op);
-                sio.setSeq(seq++); // 순서 설정 (i+1 대신 seq 변수 사용)
+                sio.setSeq(seq++);
                 itemOps.add(sio);
             }
         }
 
-        // ⭐ setOperations 대신 헬퍼 메서드 사용
         item.updateOperations(itemOps);
         item.setTotalOperations(itemOps.size());
 
@@ -335,6 +342,7 @@ public class SalesItemService {
                 item.getCoatingMethod(),
                 item.getRemark(),
                 item.getActive(),
+                item.getImagePath(),
                 operationDtos
         );
     }

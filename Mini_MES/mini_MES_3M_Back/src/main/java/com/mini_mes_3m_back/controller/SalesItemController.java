@@ -63,11 +63,16 @@ public class SalesItemController {
     }
 
     // 4. 수정 (상세 페이지에서만 사용)
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}",
+            consumes = { MediaType.MULTIPART_FORM_DATA_VALUE } // consumes 명시
+    )
     public ResponseEntity<SalesItemRegisterDto> updateSalesItem(
             @PathVariable Long id,
-            @RequestBody SalesItemRegisterDto dto) {
-        return ResponseEntity.ok(salesItemService.updateSalesItem(id, dto));
+            @ModelAttribute @Valid SalesItemRegisterDto dto,
+            @RequestPart(value = "file", required = false) MultipartFile file) { // 💡 파일 파라미터 추가
+
+        // 서비스 메서드 호출 시 file도 함께 전달
+        return ResponseEntity.ok(salesItemService.updateSalesItem(id, dto, file));
     }
 
     // 5. 거래상태 토글
@@ -86,11 +91,11 @@ public class SalesItemController {
         return ResponseEntity.ok().build();
     }
     // 등록용: 활성 거래처만
-//    @GetMapping("/partners/active")
-//    public ResponseEntity<List<PartnerSelectResponseDto>> getActivePartners() {
-//        List<PartnerSelectResponseDto> partners = salesItemService.getActivePartners();
-//        return ResponseEntity.ok(partners);
-//    }
+    @GetMapping("/partners/active")
+    public ResponseEntity<List<PartnerSelectResponseDto>> getActivePartners() {
+        List<PartnerSelectResponseDto> partners = salesItemService.getActivePartners();
+        return ResponseEntity.ok(partners);
+    }
 
     // 상세조회용: 전체 거래처
     @GetMapping("/partners/all")
