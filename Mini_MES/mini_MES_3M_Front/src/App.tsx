@@ -16,10 +16,10 @@ import RawItemInboundPage from "./pages/RawItemInboundPage";
 import RawItemOutboundPage from "./pages/RawItemOutboundPage";
 import SalesItemViewPage from "./pages/SalesItemListPage";
 import RawItemInventoryPage from "./pages/RawsItemInventoryPage";
-import ProcessStatusPage from "./pages/ProcessStatusPage";
 import RawItemList from "./pages/RawItemList";
 import RawItemDetail from "./pages/RawItemDetail";
 import SalesItemDetailPage from "./pages/SalesItemDetailPage";
+import OperationStatusPage from "./pages/OperationStatusPage";
 
 const App = () => {
   return (
@@ -131,8 +131,8 @@ const App = () => {
               />
               {/* 공정진행현황 페이지 */}
               <Route
-                path="/ProcessRegister/Lotid"
-                element={<ProcessStatusPage />}
+                path="/ProcessRegister/:id"
+                element={<OperationStatusPage />}
               />
             </Routes>
           </div>

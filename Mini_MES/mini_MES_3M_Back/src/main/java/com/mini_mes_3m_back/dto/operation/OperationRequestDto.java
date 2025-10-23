@@ -1,5 +1,6 @@
 package com.mini_mes_3m_back.dto.operation;
 
+import com.mini_mes_3m_back.entity.Operations;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -26,5 +27,7 @@ public class OperationRequestDto {
     @PositiveOrZero(message = "소요 시간은 0 또는 양수만 입력 가능합니다.")
     private Integer standardTime;
 
-    // 이 DTO는 컨트롤러에서 @Valid 어노테이션과 함께 사용됩니다.
+    // ⭐️ 상태 필드 추가 (선택적으로 입력 가능)
+    private Operations.OperationStatus status;
+
 }

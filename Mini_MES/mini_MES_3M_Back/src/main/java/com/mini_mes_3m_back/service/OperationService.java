@@ -116,7 +116,8 @@ public class OperationService {
                 dto.getCode(),
                 dto.getName(),
                 dto.getDescription(),
-                dto.getStandardTime()
+                dto.getStandardTime(),
+                dto.getStatus() != null ? dto.getStatus() : existingOperation.getStatus()
         );
 
         // save()를 호출할 필요 없이, @Transactional에 의해 변경 감지(Dirty Checking)로 자동 업데이트됨.
@@ -139,14 +140,16 @@ public class OperationService {
     @Transactional(readOnly = true)
     public List<OperationResponseDto> getAllOperations() {
         return operationsRepository.findAll().stream()
-                .map(op -> new OperationResponseDto(
+                .map(op -> new OperationResponseDto (
+
                         op.getOperationId(),
                         op.getCode(),
                         op.getName(),
                         op.getDescription(),
-                        op.getStandardTime()
-                ))
-                .collect(Collectors.toList());
+                        op.getStandardTime(),
+                        op.getStatus()
+                        ))
+            .collect(Collectors.toList());
     }
 
 }
