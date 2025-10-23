@@ -40,6 +40,7 @@ public interface SalesInboundRepository extends JpaRepository<SalesInbound, Long
             "LOWER(salesItem.itemCode) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + // 품목 번호
             "LOWER(salesItem.itemName) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + // 품목명
             "LOWER(si.inboundLOTNum) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + // 입고번호 (LOT번호)
+            "LOWER(salesItem.coatingMethod) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " + // 도장방식
             "LOWER(FUNCTION('DATE_FORMAT', si.receivedAt, '%Y-%m-%d')) LIKE LOWER(CONCAT('%', :keyword, '%')))") // 입고일자 (YYYY-MM-DD)
     List<SalesInbound> findActiveSalesInboundsWithSearch(@Param("keyword") String keyword);
 
