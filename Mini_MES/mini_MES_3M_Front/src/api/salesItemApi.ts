@@ -85,35 +85,35 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "/api";
 const api = axios.create({ baseURL: API_BASE_URL });
 
 // =================================================================
-// ⚙️ API 함수 (수정 및 보완)
+// ⚙️ API 함수 (수정 및 보완) 개 이상 필요 없음
 // =================================================================
 
-export const registerSalesItem = async (
-  data: SalesItemRegisterData,
-  file?: File
-): Promise<SalesItem> => {
-  const formData = new FormData();
-  formData.append("data", new Blob([JSON.stringify(data)], { type: "application/json" }));
-  if (file) formData.append("file", file);
-formData.forEach((value, key) => {
-  if (value instanceof Blob) {
-    value.text().then((text) => {
-      console.log(`${key}:`, text);
-    });
-  } else {
-    console.log(`${key}:`, value);
-  }
-});
+// export const registerSalesItem = async (
+//   data: SalesItemRegisterData,
+//   file?: File
+// ): Promise<SalesItem> => {
+//   const formData = new FormData();
+//   formData.append("data", new Blob([JSON.stringify(data)], { type: "application/json" }));
+//   if (file) formData.append("file", file);
+// formData.forEach((value, key) => {
+//   if (value instanceof Blob) {
+//     value.text().then((text) => {
+//       console.log(`${key}:`, text);
+//     });
+//   } else {
+//     console.log(`${key}:`, value);
+//   }
+// });
 
-  const response: AxiosResponse<SalesItem> = await api.post(
-    "/sales-items",
-    formData,
-    {
-      headers: { "Content-Type": "multipart/form-data" },
-    }
-  );
-  return response.data;
-};
+//   const response: AxiosResponse<SalesItem> = await api.post(
+//     "/sales-items",
+//     formData,
+//     {
+//       headers: { "Content-Type": "multipart/form-data" },
+//     }
+//   );
+//   return response.data;
+// };
 
 // ✅ 모든 공정/작업(Operation) 조회 (GET /info/routing)
 export const fetchAllOperations = async (): Promise<OperationResponseDto[]> => {
