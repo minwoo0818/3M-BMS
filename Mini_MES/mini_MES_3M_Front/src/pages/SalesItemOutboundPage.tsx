@@ -38,20 +38,6 @@ const SalesItemOutboundPage: React.FC = () => {
     fetchInboundList();
   }, [currentPage, searchType, searchKeyword]);
 
-  // const data = [
-  //   {
-  //     inboundid: 'LOT-20251009-001',
-  //     partnerName: '코드 하우스',
-  //     itemCode: 'Code-001',
-  //     itemName: '핀걸이 스프링',
-  //     inboundDate: '2025-10-09',
-  //     inboundqty: '500EA',
-  //     classification: '방산',
-  //     outboundqty: '',
-  //     outboundDate: ''
-  //   },
-  // ];
-
   const handleChange = (id: string, field: "qty" | "date", value: string) => {
     setFormValues((prev) => ({
       ...prev,
@@ -66,10 +52,6 @@ const SalesItemOutboundPage: React.FC = () => {
     console.log("검색:", searchType, searchKeyword);
     setCurrentPage(1); // 검색 시 첫 페이지로 이동
   };
-
-  // const handleRegister = (itemCode: string) => {
-  //   console.log('등록:', itemCode);
-  // };
 
   const handleRegister = (inboundId: number) => {
     const idString = String(inboundId);
@@ -89,7 +71,11 @@ const SalesItemOutboundPage: React.FC = () => {
     }
 
     // ⭐️ 잔여 수량 초과 등록 방지 로직은 유지 ⭐️
-    if (currentItem && parsedQty > currentItem.remainingQty) {
+    if (
+      currentItem &&
+      typeof currentItem.remainingQty === "number" &&
+      parsedQty > currentItem.remainingQty
+    ) {
       alert(
         `출고 수량(${parsedQty})이 잔여 수량(${currentItem.remainingQty})보다 많습니다.`
       );
@@ -111,7 +97,7 @@ const SalesItemOutboundPage: React.FC = () => {
       body: JSON.stringify({
         inboundId,
         qty: parseInt(qty),
-        shippedAt: date + "T00:00:00+09:00",
+        shippedAt: date,
       }),
     })
       .then((res) => {

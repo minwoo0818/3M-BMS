@@ -80,7 +80,8 @@ public class SalesItemInboundService {
                 savedInbound.getQty(), // inboundQuantity -> qty로 필드명 변경
                 savedInbound.getReceivedAt(), // inboundDate -> receivedAt으로 필드명 변경
                 savedInbound.getInboundLOTNum(), // lotNumber -> inboundLOTNum으로 필드명 변경
-                savedInbound.getCreatedAt()
+                savedInbound.getCreatedAt(),
+                savedInbound.getItem().getCoatingMethod()
         );
     }
 
@@ -102,6 +103,7 @@ public class SalesItemInboundService {
                             si.getItem().getItemCode(),
                             si.getItem().getItemName(),
                             si.getItem().getClassification(),
+                            si.getItem().getCoatingMethod(),
                             si.getInboundLOTNum(),
                             si.getQty(),
                             si.getReceivedAt(),
