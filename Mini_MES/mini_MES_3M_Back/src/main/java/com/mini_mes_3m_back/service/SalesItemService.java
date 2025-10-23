@@ -1,7 +1,10 @@
 package com.mini_mes_3m_back.service;
 
-import com.mini_mes_3m_back.dto.*;
 import com.mini_mes_3m_back.dto.Partner.PartnerSelectResponseDto;
+import com.mini_mes_3m_back.dto.operation.OperationDto;
+import com.mini_mes_3m_back.dto.salesItem.SalesItemDetailViewDto;
+import com.mini_mes_3m_back.dto.salesItem.SalesItemRegisterDto;
+import com.mini_mes_3m_back.dto.salesItem.SalesItemSearchDto;
 import com.mini_mes_3m_back.entity.*;
 import com.mini_mes_3m_back.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +50,7 @@ public class SalesItemService {
                     .orElseThrow(() -> new RuntimeException("Partner not found"));
         }
 
+        // 기존 품목 조회 또는 신규 생성 (SalesItem 엔티티 수정으로 operations는 null이 아님)
         SalesItem salesItem = salesItemRepository.findByItemCode(dto.getItemCode())
                 .orElse(SalesItem.builder().build());
 
@@ -63,7 +67,7 @@ public class SalesItemService {
 
         if (file != null && !file.isEmpty()) {
             try {
-                String uploadDir = "uploads/sales-items";
+                String uploadDir = "C:\\Users\\codehows\\Desktop\\3M-BMS\\Mini_MES\\upload_Sales_Item";
                 Files.createDirectories(Paths.get(uploadDir));
 
                 String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
@@ -76,7 +80,7 @@ public class SalesItemService {
             }
         }
 
-        // 공정 매핑 로직 유지...
+        // 공정 매핑 로직: 기존의 setOperations()를 대체
         if (dto.getOperationIds() != null && !dto.getOperationIds().isEmpty()) {
             List<Operations> operations = operationsRepository.findAllById(dto.getOperationIds());
             List<SalesItemOperation> itemOperations = new ArrayList<>();
@@ -87,20 +91,38 @@ public class SalesItemService {
                 sio.setSeq(i + 1); // seq 설정
                 itemOperations.add(sio);
             }
-            salesItem.setOperations(itemOperations);
+
+            // ⭐ setOperations 대신 헬퍼 메서드 사용
+            salesItem.updateOperations(itemOperations);
             salesItem.setTotalOperations(itemOperations.size());
+        } else {
+            // 공정이 없다면 빈 리스트로 갱신
+            salesItem.updateOperations(Collections.emptyList());
+            salesItem.setTotalOperations(0);
         }
 
         SalesItem saved = salesItemRepository.saveAndFlush(salesItem);
         return mapToRegisterDto(saved);
     }
 
+    // 등록용: 활성 거래처만
     @Transactional(readOnly = true)
-    public List<PartnerSelectResponseDto> getAllActivePartners() {
-        return partnerRepository.findByActiveTrue().stream()
+    public List<PartnerSelectResponseDto> getActivePartners() {
+        return partnerRepository.findByActiveTrue()
+                .stream()
                 .map(p -> new PartnerSelectResponseDto(p.getPartnerId(), p.getName()))
                 .collect(Collectors.toList());
     }
+
+    // 상세조회용: 전체 거래처
+    @Transactional(readOnly = true)
+    public List<PartnerSelectResponseDto> getAllPartners() {
+        return partnerRepository.findAll()
+                .stream()
+                .map(p -> new PartnerSelectResponseDto(p.getPartnerId(), p.getName()))
+                .collect(Collectors.toList());
+    }
+
 
     // -------------------
     // 2️⃣ 목록 조회
@@ -122,7 +144,6 @@ public class SalesItemService {
     // -------------------
     // 3️⃣ 상세조회
     // -------------------
-    // Controller가 SalesItemDetailViewDto를 사용하도록 통일했으므로 이 메서드를 사용합니다.
     @Transactional(readOnly = true)
     public SalesItemDetailViewDto getSalesItemDetail(Long id) {
         SalesItem item = salesItemRepository.findById(id)
@@ -148,14 +169,11 @@ public class SalesItemService {
         item.setRemark(dto.getRemark());
 
         // 공정 수정: 기존 연결 제거 후 재생성
-        if (item.getOperations() != null && !item.getOperations().isEmpty()) {
-            salesItemOperationRepository.deleteAll(item.getOperations());
-            item.getOperations().clear();
-        }
+        List<SalesItemOperation> itemOps = Collections.emptyList();
 
         if (dto.getOperationIds() != null && !dto.getOperationIds().isEmpty()) {
             List<Operations> ops = operationsRepository.findAllById(dto.getOperationIds());
-            List<SalesItemOperation> itemOps = new ArrayList<>();
+            itemOps = new ArrayList<>();
             for (int i = 0; i < dto.getOperationIds().size(); i++) {
                 Long opId = dto.getOperationIds().get(i);
                 Operations op = ops.stream().filter(o -> o.getOperationId().equals(opId)).findFirst()
@@ -166,9 +184,12 @@ public class SalesItemService {
                 sio.setSeq(i + 1);
                 itemOps.add(sio);
             }
-            item.setOperations(itemOps);
-            item.setTotalOperations(itemOps.size());
         }
+
+        // ⭐ setOperations 대신 헬퍼 메서드 사용
+        item.updateOperations(itemOps);
+        item.setTotalOperations(itemOps.size());
+
 
         SalesItem saved = salesItemRepository.save(item);
         return mapToRegisterDto(saved);
@@ -191,13 +212,12 @@ public class SalesItemService {
     // DTO 매핑
     // ===================
 
-    // ⚠️ 중복된 첫 번째 mapToRegisterDto는 제거하고, 두 번째 mapToRegisterDto만 남깁니다.
     private SalesItemRegisterDto mapToRegisterDto(SalesItem item) {
         List<SalesItemOperation> operations = salesItemOperationRepository
                 .findBySalesItem_SalesItemIdOrderBySeqAsc(item.getSalesItemId());
 
         List<Long> operationIds = operations.stream()
-                .map(o -> o.getOperations().getOperationId()) // ⚠️ o.getOperation() -> o.getOperations()로 수정
+                .map(o -> o.getOperations().getOperationId())
                 .collect(Collectors.toList());
 
         return new SalesItemRegisterDto(
@@ -212,31 +232,17 @@ public class SalesItemService {
                 operationIds);
     }
 
-    // ⚠️ Controller가 이 DTO를 사용하는 경우, 이름 충돌을 피하기 위해 메서드명을 변경했습니다.
-    // 기존 getSalesItemDetail(Long id)와 이름은 같지만 반환 DTO가 다른 메서드가 존재했었음.
-    // Controller에서 SalesItemDetailViewDto를 사용하도록 통일했으므로, 이 메서드를 Private DTO 매퍼로 변환합니다.
-    /*
-    @Transactional(readOnly = true)
-    public SalesItemDetailDto getSalesItemDetail(Long id) {
-        SalesItem item = salesItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Item not found"));
-        // ... (로직)
-    }
-    */
-
-
     private SalesItemDetailViewDto mapToDetailDto(SalesItem item) {
-        List<OperationDto> operationDtos = item.getOperations() == null ? Collections.emptyList() :
-                item.getOperations().stream()
-                        .map(o -> new OperationDto(
-                                o.getOperations().getOperationId(),
-                                o.getOperations().getCode(),
-                                o.getOperations().getName(),
-                                o.getOperations().getDescription(),
-                                o.getOperations().getStandardTime()
-                        )).collect(Collectors.toList());
+        // item.getOperations()는 이제 null이 아님을 보장합니다.
+        List<OperationDto> operationDtos = item.getOperations().stream()
+                .map(o -> new OperationDto(
+                        o.getOperations().getOperationId(),
+                        o.getOperations().getCode(),
+                        o.getOperations().getName(),
+                        o.getOperations().getDescription(),
+                        o.getOperations().getStandardTime()
+                )).collect(Collectors.toList());
 
-        // ⚠️ DTO 생성자 괄호 누락 및 인자 순서 정리
         return new SalesItemDetailViewDto(
                 item.getSalesItemId(),
                 item.getPartner() != null ? item.getPartner().getPartnerId() : null,
@@ -254,7 +260,6 @@ public class SalesItemService {
     }
 
     private SalesItemSearchDto mapToSearchDto(SalesItem item) {
-        // ⚠️ DTO 인자가 중복되거나 누락된 부분을 정리했습니다.
         return new SalesItemSearchDto(
                 item.getSalesItemId(),
                 item.getPartner() != null ? item.getPartner().getPartnerId() : null,
@@ -266,7 +271,6 @@ public class SalesItemService {
                 item.getCoatingMethod(),
                 item.getRemark(),
                 item.getActive()
-                // operationDtos가 DTO 정의에 없다면 제거합니다.
         );
     }
 }

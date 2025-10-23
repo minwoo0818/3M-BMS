@@ -1,4 +1,4 @@
-package com.mini_mes_3m_back.dto;
+package com.mini_mes_3m_back.dto.operation;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

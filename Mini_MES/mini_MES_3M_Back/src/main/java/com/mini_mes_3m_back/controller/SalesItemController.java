@@ -1,7 +1,11 @@
 package com.mini_mes_3m_back.controller;
 
-import com.mini_mes_3m_back.dto.*;
+import com.mini_mes_3m_back.dto.Partner.PartnerSelectResponseDto;
+import com.mini_mes_3m_back.dto.salesItem.SalesItemDetailViewDto;
+import com.mini_mes_3m_back.dto.salesItem.SalesItemRegisterDto;
+import com.mini_mes_3m_back.dto.salesItem.SalesItemUpdateStatusRequestDto;
 import com.mini_mes_3m_back.service.SalesItemService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,13 +26,16 @@ public class SalesItemController {
 
     // 1. 등록: DTO 데이터와 파일 모두 처리 (Multipart 버전 하나로 통일)
     // 기존 @RequestBody 버전과 @RequestPart 버전 중, 파일 처리 버전만 남깁니다.
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(
+            consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE }
+    )
     public ResponseEntity<SalesItemRegisterDto> createSalesItem(
-            @RequestPart("data") SalesItemRegisterDto dto,
+            @RequestPart("data") @Valid SalesItemRegisterDto dto,
             @RequestPart(value = "file", required = false) MultipartFile file) {
         SalesItemRegisterDto result = salesItemService.createSalesItemWithImage(dto, file);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
+
 
     // 2. 목록조회 (페이지네이션 + 검색)
     // 기존 List 반환 버전 대신, Page 반환 버전을 주력으로 남깁니다.
@@ -73,4 +80,18 @@ public class SalesItemController {
         salesItemService.updateSalesItemActive(salesItemId, requestDto.getActive());
         return ResponseEntity.ok().build();
     }
+    // 등록용: 활성 거래처만
+    @GetMapping("/partners/active")
+    public ResponseEntity<List<PartnerSelectResponseDto>> getActivePartners() {
+        List<PartnerSelectResponseDto> partners = salesItemService.getActivePartners();
+        return ResponseEntity.ok(partners);
+    }
+
+    // 상세조회용: 전체 거래처
+    @GetMapping("/partners/all")
+    public ResponseEntity<List<PartnerSelectResponseDto>> getAllPartners() {
+        List<PartnerSelectResponseDto> partners = salesItemService.getAllPartners();
+        return ResponseEntity.ok(partners);
+    }
+
 }

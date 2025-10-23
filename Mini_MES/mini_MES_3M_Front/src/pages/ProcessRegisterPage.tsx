@@ -192,31 +192,6 @@ const ProcessRegisterPage: React.FC = () => {
     }
   }, [newProcess.code]); // newProcess.code가 변경될 때마다 함수 재생성
 
-  //   const handleDuplicateCheck = useCallback(() => {
-
-  //     if (!newProcess.code) return console.error("공정 코드를 입력해주세요.");
-
-  //     // 실제 API 호출 로직...
-
-  //     const isDuplicate = DUMMY_PROCESS_DATA.some(
-
-  //       (item) => item.code === newProcess.code
-
-  //     );
-
-  //     // Custom Modal 대신 console.log 사용
-
-  //     if (isDuplicate) {
-
-  //       console.error(`[${newProcess.code}]는 이미 존재하는 코드입니다.`);
-
-  //     } else {
-
-  //       console.log(`[${newProcess.code}]는 사용 가능한 코드입니다.`);
-
-  //     }
-
-  //   }, [newProcess.code]);
 
   // 공정 등록 처리
 
@@ -289,46 +264,6 @@ const ProcessRegisterPage: React.FC = () => {
     }
   }, [newProcess, isCodeChecked, isCodeAvailable]);
 
-  // const newId = DUMMY_PROCESS_DATA.length + 1;
-
-  // const newEntry: ProcessItem = {
-
-  //   no: newId,
-
-  //   code: newProcess.code,
-
-  //   name: newProcess.name,
-
-  //   processContent: newProcess.processContent || "", // 내용이 비어있을 수 있음
-
-  //   processTime: parseInt(newProcess.processTime) || 0,
-
-  // };
-
-  // 더미 데이터에 추가 및 갱신 (실제 환경에서는 setFullData만 사용)
-
-  // DUMMY_PROCESS_DATA.push(newEntry);
-
-  // setFullData((prev) =>
-
-  //   [{ ...newEntry, no: prev.length + 1 }, ...prev].map((item, index) => ({
-
-  //     ...item,
-
-  //     no: index + 1,
-
-  //   }))
-
-  // ); // 새 항목을 맨 앞에 추가
-
-  //     setNewProcess({ code: "", name: "", processContent: "", processTime: "" }); // 폼 초기화
-
-  //     console.log("공정이 등록되었습니다.");
-
-  //     setCurrentPage(1);
-
-  //   }, [newProcess]);
-
   // 검색 실행 로직 (검색 후 첫 페이지로 이동)
 
   const handleSearch = useCallback(
@@ -368,75 +303,6 @@ const ProcessRegisterPage: React.FC = () => {
     },
     [searchType, searchTerm]
   );
-
-  //   const lowerSearchTerm = searchTerm.toLowerCase().trim();
-
-  //   if (!lowerSearchTerm) {
-
-  //     setFullData(DUMMY_PROCESS_DATA); // 검색어 없으면 전체 조회
-
-  //     return;
-
-  //       const filtered = DUMMY_PROCESS_DATA.filter((item) => {
-
-  //         let target: string;
-
-  //         if (searchType === "공정코드") {
-
-  //           target = item.code;
-
-  //         } else if (searchType === "공정명") {
-
-  //           target = item.name;
-
-  //         } else {
-
-  //           target = `${item.code} ${item.name} ${item.processContent}`;
-
-  //         }
-
-  //         return target.toLowerCase().includes(lowerSearchTerm);
-
-  //       });
-
-  //       // 필터링된 데이터에 No를 다시 부여 (No.는 현재 검색/필터링된 순서대로 보여야 함)
-
-  //       const finalData = filtered.map((item, index) => ({
-
-  //         ...item,
-
-  //         no: index + 1,
-
-  //       }));
-
-  //       setFullData(finalData);
-
-  //     },
-
-  //     [searchTerm, searchType]
-
-  //   );
-
-  // ----------------------------------------------------
-
-  // Computed Values (Paging)
-
-  // ----------------------------------------------------
-
-  //   const totalPages = Math.ceil(fullData.length / itemsPerPage);
-
-  //   const currentData = useMemo(() => {
-
-  //     const startIndex = (currentPage - 1) * itemsPerPage;
-
-  //     const endIndex = startIndex + itemsPerPage;
-
-  //     // 현재 페이지에 해당하는 데이터만 잘라서 반환 (10개씩)
-
-  //     return fullData.slice(startIndex, endIndex);
-
-  //   }, [fullData, currentPage, itemsPerPage]);
-
   // 페이지 이동 핸들러
 
   const handlePageChange = useCallback(

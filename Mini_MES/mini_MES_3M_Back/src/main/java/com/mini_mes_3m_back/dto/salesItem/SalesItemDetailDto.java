@@ -1,5 +1,6 @@
-package com.mini_mes_3m_back.dto;
+package com.mini_mes_3m_back.dto.salesItem;
 
+import com.mini_mes_3m_back.dto.operation.OperationDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import java.util.List;

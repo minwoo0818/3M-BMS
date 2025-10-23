@@ -1,7 +1,7 @@
 package com.mini_mes_3m_back.controller;
 
-import com.mini_mes_3m_back.dto.OperationRequestDto;
-import com.mini_mes_3m_back.dto.OperationResponseDto;
+import com.mini_mes_3m_back.dto.operation.OperationRequestDto;
+import com.mini_mes_3m_back.dto.operation.OperationResponseDto;
 import com.mini_mes_3m_back.service.OperationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/info/routing")         // 공통 URL 경로 설정
@@ -115,4 +117,11 @@ public class OperationController {
                     .body("{\"message\": \"삭제할 공정을 찾을 수 없습니다.\"}");
         }
     }
+    // ✅ 수주품목 등록 페이지용 - 전체 공정 리스트 (간단 버전)
+    @GetMapping("/all")
+    public ResponseEntity<List<OperationResponseDto>> getAllOperations() {
+        List<OperationResponseDto> operations = operationService.getAllOperations();
+        return ResponseEntity.ok(operations);
+    }
+
 }

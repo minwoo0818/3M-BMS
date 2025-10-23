@@ -1,7 +1,7 @@
 package com.mini_mes_3m_back.service;
 
-import com.mini_mes_3m_back.dto.OperationRequestDto;
-import com.mini_mes_3m_back.dto.OperationResponseDto;
+import com.mini_mes_3m_back.dto.operation.OperationRequestDto;
+import com.mini_mes_3m_back.dto.operation.OperationResponseDto;
 import com.mini_mes_3m_back.entity.Operations;
 import com.mini_mes_3m_back.repository.OperationsRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -135,4 +135,18 @@ public class OperationService {
         // 2. 삭제
         operationsRepository.deleteById(operationId);
     }
+    // 수주품목 등록에서 공정 등록할때
+    @Transactional(readOnly = true)
+    public List<OperationResponseDto> getAllOperations() {
+        return operationsRepository.findAll().stream()
+                .map(op -> new OperationResponseDto(
+                        op.getOperationId(),
+                        op.getCode(),
+                        op.getName(),
+                        op.getDescription(),
+                        op.getStandardTime()
+                ))
+                .collect(Collectors.toList());
+    }
+
 }
