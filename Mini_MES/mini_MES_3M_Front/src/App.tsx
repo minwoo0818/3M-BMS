@@ -14,7 +14,7 @@ import RawItemReg from "./pages/RawItemReg";
 import RawsHistoryPage from "./pages/RawsHistoryPage";
 import RawItemInboundPage from "./pages/RawItemInboundPage";
 import RawItemOutboundPage from "./pages/RawItemOutboundPage";
-import SalesItemViewPage from "./pages/SalesItemListPage";
+import SalesItemViewPage from "./pages/SalesItemViewPage";
 import RawItemInventoryPage from "./pages/RawsItemInventoryPage";
 import RawItemList from "./pages/RawItemList";
 import RawItemDetail from "./pages/RawItemDetail";

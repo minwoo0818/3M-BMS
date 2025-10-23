@@ -38,6 +38,7 @@ export interface SalesInboundHistoryItem {
   itemName: string; // 품목명
   classification: string; // 분류
   inboundLOTNum: string; // 입고 LOT 번호
+  coatingMethod: string;
   qty: number; // 입고 수량
   receivedAt: string; // 입고 일자 (YYYY-MM-DD 형식)
   remark: string; // SalesItem의 비고

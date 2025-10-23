@@ -17,4 +17,8 @@ spring:
     multipart:
       max-file-size: 5000MB  # 단일 파일 크기 제한
       max-request-size: 5000MB # 전체 요청 크기 제한
-  itemImgLocation: C:\3M-BMS\Mini_MES\images
+
+# Spring Boot의 기본 설정 구역(spring:) 밖에 정의하여
+# 서비스 코드에서 @Value로 쉽게 접근할 수 있게 합니다.
+file:
+  upload-dir: C:\\3M-BMS/Mini_MES/upload_Sales_Item

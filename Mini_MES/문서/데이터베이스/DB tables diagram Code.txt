@@ -88,6 +88,7 @@ Table sales_inbound {
   item_id integer [not null]                  // FK → sales_items
   last_operation_seq integer [default: 0]     // 완료된 마지막 공정 순서
   qty integer [not null]
+  remaining_qty integer [not null]
   received_at timestamptz
   created_at timestamptz
   updated_at timestamptz

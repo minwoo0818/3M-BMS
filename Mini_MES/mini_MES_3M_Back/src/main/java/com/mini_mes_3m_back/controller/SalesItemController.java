@@ -24,18 +24,23 @@ public class SalesItemController {
 
     private final SalesItemService salesItemService;
 
-    // 1. 등록: DTO 데이터와 파일 모두 처리 (Multipart 버전 하나로 통일)
-    // 기존 @RequestBody 버전과 @RequestPart 버전 중, 파일 처리 버전만 남깁니다.
+    // 1. 등록: DTO 데이터와 파일 모두 처리 (Multipart 버전 수정)
     @PostMapping(
-            consumes = { MediaType.MULTIPART_FORM_DATA_VALUE, MediaType.APPLICATION_JSON_VALUE }
+            // DTO 필드와 파일을 개별적으로 받는 경우에는 MediaType.MULTIPART_FORM_DATA_VALUE만 지정하는 것이 일반적입니다.
+            consumes = { MediaType.MULTIPART_FORM_DATA_VALUE }
     )
     public ResponseEntity<SalesItemRegisterDto> createSalesItem(
-            @RequestPart("data") @Valid SalesItemRegisterDto dto,
+            // **수정**: @RequestPart("data") 대신 @ModelAttribute를 사용하여 개별 폼 필드와 DTO를 바인딩합니다.
+            // @ModelAttribute는 FormData의 개별 텍스트 필드를 DTO로 자동 매핑합니다.
+            @ModelAttribute @Valid SalesItemRegisterDto dto,
             @RequestPart(value = "file", required = false) MultipartFile file) {
+
+        // 프론트에서 operationIds를 JSON 문자열로 보냈다면,
+        // 서비스 계층에서는 이 필드를 List<Long>으로 변환하는 추가 로직이 필요할 수 있습니다.
+
         SalesItemRegisterDto result = salesItemService.createSalesItemWithImage(dto, file);
         return new ResponseEntity<>(result, HttpStatus.CREATED);
     }
-
 
     // 2. 목록조회 (페이지네이션 + 검색)
     // 기존 List 반환 버전 대신, Page 반환 버전을 주력으로 남깁니다.
@@ -58,11 +63,16 @@ public class SalesItemController {
     }
 
     // 4. 수정 (상세 페이지에서만 사용)
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}",
+            consumes = { MediaType.MULTIPART_FORM_DATA_VALUE } // consumes 명시
+    )
     public ResponseEntity<SalesItemRegisterDto> updateSalesItem(
             @PathVariable Long id,
-            @RequestBody SalesItemRegisterDto dto) {
-        return ResponseEntity.ok(salesItemService.updateSalesItem(id, dto));
+            @ModelAttribute @Valid SalesItemRegisterDto dto,
+            @RequestPart(value = "file", required = false) MultipartFile file) { // 💡 파일 파라미터 추가
+
+        // 서비스 메서드 호출 시 file도 함께 전달
+        return ResponseEntity.ok(salesItemService.updateSalesItem(id, dto, file));
     }
 
     // 5. 거래상태 토글

@@ -305,34 +305,6 @@ export default function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchKey, setSearchKey] = useState<string>("전체");
 
-  //   // URL 변경을 시뮬레이션하고 상태를 업데이트하는 핸들러
-  //   const handleTypeChange = useCallback((newType: HistoryType) => {
-  //     // 실제 React Router에서는 history.push('/path/' + newType.toLowerCase())를 사용합니다.
-  //     const newSegment: PathSegment = newType === 'INBOUND' ? 'inbound' : 'outbound';
-
-  //     // 현재 경로에서 마지막 세그먼트를 newSegment로 교체하거나 추가합니다.
-  //     const segments = window.location.pathname.toLowerCase().split('/').filter(p => p);
-
-  //     // 마지막 세그먼트가 'inbound' 또는 'outbound'이면 교체, 아니면 추가
-  //     let newPath = '';
-  //     if (segments.length > 0 && (segments[segments.length - 1] === 'inbound' || segments[segments.length - 1] === 'outbound')) {
-  //         segments[segments.length - 1] = newSegment;
-  //         newPath = '/' + segments.join('/');
-  //     } else {
-  //         newPath = window.location.pathname + (window.location.pathname.endsWith('/') ? '' : '/') + newSegment;
-  //     }
-
-  //     window.history.pushState({}, '', newPath); // URL 변경 시뮬레이션
-
-  //     // // 상태를 업데이트하여 컴포넌트 강제 재렌더링
-  //     // setCurrentHistoryType(newType);
-
-  //     // 타입 변경 시 검색 조건 초기화
-  //     setSearchTerm('');
-  //     setSearchKey('전체');
-  //     setCurrentPage(1);
-
-  //   }, []);
 
   // --- 동적 설정 계산 (currentHistoryType에 의존) ---
   const { title, placeholder, searchOptions, dummyData } = useMemo(() => {
@@ -595,7 +567,7 @@ export default function App() {
 
   return (
     <div style={styles.container}>
-      {/* 1. 네비게이션 탭 (useParams 시뮬레이션) */}
+      {/* 1. 네비게이션 탭 (useParams 시뮬레이션)
       <div style={styles.navContainer}>
         <button
           style={styles.navTab(currentHistoryType === "INBOUND", "INBOUND")}
@@ -609,7 +581,7 @@ export default function App() {
         >
           출고 이력 조회
         </button>
-      </div>
+      </div> */}
 
       {/* 2. 헤더 */}
       <div style={styles.header(currentHistoryType)}>{title}</div>

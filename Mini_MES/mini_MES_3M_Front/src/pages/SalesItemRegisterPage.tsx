@@ -7,8 +7,10 @@ import {
 } from "@mui/material";
 import React, { useState, useMemo, type ChangeEvent, type FormEvent, useCallback, useEffect } from "react";
 // ⭐️ [추가/수정] 공정 조회 API 및 타입 import
-import { registerSalesItem, fetchActivePartners, fetchAllOperations } from "../api/salesItemApi"; 
+import { fetchAllOperations } from "../api/salesItemApi";
 import type { OperationResponseDto } from "../api/salesItemApi.ts";
+import { getActivePartnersByType } from "../api/partnersApi.ts";
+import { useNavigate } from "react-router-dom";
 
 // Back-end Operations Entity에 맞춰 ID 추가 (프론트엔드에서 사용할 일관된 이름)
 interface ProcessItem {
@@ -19,21 +21,25 @@ interface ProcessItem {
     processTime: number; // Back-end standardTime에 매칭
 }
 
+// ⭐️ [신규] 선택된 공정 목록을 순서와 함께 저장할 인터페이스
+interface SelectedOperation extends ProcessItem {
+    order: number; // 선택된 순서 (1부터 시작)
+}
+
 // ⭐️ [수정] API 응답 형식에 맞게 name 필드를 사용하도록 수정
-// (원래 API DTO와 필드명이 다르지만, 사용자님의 콘솔 출력 형식에 맞춤)
 interface CustomPartnerSelectResponseDto {
     partnerId: number;
     name: string; // API 응답 형식에 맞춰 'partnerName' 대신 'name' 사용
 }
 
-type PartnerOption = CustomPartnerSelectResponseDto; 
+type PartnerOption = CustomPartnerSelectResponseDto;
 
 type SearchOption = "전체" | "공정코드" | "공정명";
 
 const SalesItemRegisterPage: React.FC = () => {
-    
+
     // 전체 공정 목록 상태 (검색 필터링 전 원본 데이터)
-    const [fullData, setFullData] = useState<ProcessItem[]>([]); 
+    const [fullData, setFullData] = useState<ProcessItem[]>([]);
     // ⭐️ [수정] 업체 목록 상태 - 수정된 CustomPartnerSelectResponseDto[] 사용
     const [partners, setPartners] = useState<PartnerOption[]>([]);
 
@@ -48,36 +54,39 @@ const SalesItemRegisterPage: React.FC = () => {
         remark: "",
     });
 
+    const navigate = useNavigate();
+
     const [file, setFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string>("");
 
-    // 공정 검색 관련 상태
+    // 공정 검색 관련 상태 (유지)
     const [searchType, setSearchType] = useState<SearchOption>("전체");
-    const [searchKeyword, setSearchKeyword] = useState(""); 
-    const [actualSearchTerm, setActualSearchTerm] = useState(""); 
+    const [searchKeyword, setSearchKeyword] = useState("");
+    const [actualSearchTerm, setActualSearchTerm] = useState("");
     const [hoveredRow, setHoveredRow] = useState<number | null>(null);
-    const [selectedOperationIds, setSelectedOperationIds] = useState<number[]>([]);
-    
-    // ⭐️ [수정] 컴포넌트 마운트 시 활성 거래처 목록을 불러오는 useEffect
+
+    // ⭐️ [수정] 선택된 공정 객체와 순서를 저장하는 상태
+    const [selectedOperations, setSelectedOperations] = useState<SelectedOperation[]>([]);
+
+    // API 전송을 위한 Operation ID 목록 (selectedOperations에서 파생)
+    const selectedOperationIds = useMemo(
+        () => selectedOperations.map((op) => op.operationId),
+        [selectedOperations]
+    );
+
+    // 컴포넌트 마운트 시 활성 거래처 목록을 불러오는 useEffect (유지)
     useEffect(() => {
-    const loadPartners = async () => {
-        try {
-            // API에서 정의한 fetchActivePartners를 호출하지만, 반환되는 데이터 구조가
-            // { partnerId: number, name: string } 형태라고 가정하고 처리
-            const partnersData = await fetchActivePartners();
-            
-            // 💡 [핵심 수정 부분] 만약 API가 CustomPartnerSelectResponseDto 형식으로 데이터를 반환한다면,
-            // (즉, partnerName이 아닌 name으로 반환한다면) 아래와 같이 매핑하거나,
-            // 아니면 API 함수의 반환 타입을 정확히 CustomPartnerSelectResponseDto[]로 설정해야 합니다.
-            // 일단은 fetchActivePartners가 CustomPartnerSelectResponseDto[]를 반환한다고 가정합니다.
-            setPartners(partnersData as PartnerOption[]);
-        } catch (error) {
-            console.error('거래처 목록 조회 실패:', error);
-            alert('거래처 목록을 불러오는 데 실패했습니다.');
-        }
-    };
-    loadPartners();
-}, []);
+        const loadPartners = async () => {
+            try {
+                const partnersData = await getActivePartnersByType('customer');
+                setPartners(partnersData as PartnerOption[]);
+            } catch (error) {
+                console.error('거래처 목록 조회 실패:', error);
+                alert('거래처 목록을 불러오는 데 실패했습니다.');
+            }
+        };
+        loadPartners();
+    }, []);
 
 
     // 컴포넌트 마운트 시 모든 공정 목록을 불러오는 useEffect (유지)
@@ -85,7 +94,7 @@ const SalesItemRegisterPage: React.FC = () => {
         const loadOperations = async () => {
             try {
                 const data = await fetchAllOperations();
-                
+
                 const mappedData: ProcessItem[] = data.map((item: OperationResponseDto) => ({
                     operationId: item.operationId,
                     processCode: item.code,
@@ -97,24 +106,24 @@ const SalesItemRegisterPage: React.FC = () => {
                 setFullData(mappedData); // 전체 공정 데이터 저장
             } catch (error) {
                 console.error('공정 목록 조회 실패:', error);
-                alert('공정 목록을 불러오는 데 실패했습니다.'); 
+                alert('공정 목록을 불러오는 데 실패했습니다.');
             }
         };
         loadOperations();
     }, []);
-    
+
     const classificationOptions = ["방산", "일반", "자동차", "조선"];
     const coatingOptions = ["분체도장", "액체도장"];
 
 
     // 공정 검색 필터링 로직 (유지)
     const filteredData = useMemo(() => {
-        const lowerCaseSearchTerm = actualSearchTerm.toLowerCase().trim(); 
+        const lowerCaseSearchTerm = actualSearchTerm.toLowerCase().trim();
 
         if (!lowerCaseSearchTerm) {
             return fullData; // 검색어가 없으면 전체 데이터 반환
         }
-        
+
         return fullData.filter((item) => { // 검색어가 있으면 필터링 실행
             switch (searchType) {
                 case "공정코드":
@@ -134,18 +143,39 @@ const SalesItemRegisterPage: React.FC = () => {
     const currentData = filteredData;
 
 
-    // 체크박스 핸들러 (유지)
+    // ⭐️ [핵심 수정] 체크박스 핸들러: 순서를 부여하고 관리
     const handleCheckboxChange = (id: number) => {
-        setSelectedOperationIds((prev) =>
-            prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-        );
+        const existingIndex = selectedOperations.findIndex((op) => op.operationId === id);
+
+        if (existingIndex !== -1) {
+            // 1. 체크 해제 (제거)
+            setSelectedOperations((prev) => {
+                const newOperations = prev.filter((_, index) => index !== existingIndex);
+                // 2. 남은 항목의 순서를 재정렬
+                return newOperations.map((item, index) => ({
+                    ...item,
+                    order: index + 1, // 순서를 1부터 다시 부여
+                }));
+            });
+        } else {
+            // 1. 체크 (추가)
+            const itemToAdd = fullData.find((item) => item.operationId === id);
+            if (itemToAdd) {
+                setSelectedOperations((prev) => [
+                    ...prev,
+                    // 2. 현재 목록의 길이 + 1을 순서로 부여
+                    { ...itemToAdd, order: prev.length + 1 },
+                ]);
+            }
+        }
     };
+
 
     // 검색 로직 (유지)
     const handleSearch = useCallback(() => {
-        setActualSearchTerm(searchKeyword); 
+        setActualSearchTerm(searchKeyword);
         console.log(`검색 실행: ${searchType} - ${searchKeyword}`);
-    }, [searchKeyword, searchType]); 
+    }, [searchKeyword, searchType]);
 
     // Enter 키 입력 시 handleSearch 실행 (유지)
     const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -162,7 +192,7 @@ const SalesItemRegisterPage: React.FC = () => {
             | SelectChangeEvent<unknown>
     ) => {
         const { name, value } = e.target;
-        
+
         // partnerId는 Number로 변환 (유지)
         if (name === 'partnerId') {
             setForm({ ...form, partnerId: value === "" ? null : Number(value) });
@@ -180,7 +210,7 @@ const SalesItemRegisterPage: React.FC = () => {
     // 등록 로직 (유지)
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        
+
         if (!form.partnerId || !form.itemName || !form.itemCode || !form.price || selectedOperationIds.length === 0) {
             alert("업체명, 품목명, 품목번호, 단가, 라우팅은 필수 입력 항목입니다.");
             return;
@@ -192,6 +222,7 @@ const SalesItemRegisterPage: React.FC = () => {
             return;
         }
 
+        // operationIds는 이미 selectedOperationIds로 순서대로 정렬되어 있음
         const salesItemDto = {
             partnerId: form.partnerId,
             itemName: form.itemName,
@@ -201,23 +232,58 @@ const SalesItemRegisterPage: React.FC = () => {
             classification: form.classification,
             coatingMethod: form.coatingMethod,
             remark: form.remark,
-            operationIds: selectedOperationIds,
+            operationIds: selectedOperationIds, // 순서가 반영된 ID 목록 사용
         };
         console.log("📦 salesItemDto:", salesItemDto);
 
+        // 이미지 처리 로직 (수정)
         const formData = new FormData();
-        formData.append(
-  "data",
-  new Blob([JSON.stringify(salesItemDto)], { type: "application/json;charset=UTF-8" }));
-        if (file) formData.append("file", file);
-          console.log("📦 FormData 내용:");
-  formData.forEach((value, key) => {
-    console.log(`  ${key}:`, value);
-  });
+
+        // 1. DTO 필드를 개별적으로 FormData에 추가합니다.
+        //    (이렇게 하면 백엔드에서 별도의 JSON 파싱 없이 바로 필드를 받을 수 있습니다.)
+        formData.append("partnerId", salesItemDto.partnerId);
+        formData.append("itemName", salesItemDto.itemName);
+        formData.append("itemCode", salesItemDto.itemCode);
+        formData.append("price", salesItemDto.price);
+        formData.append("color", salesItemDto.color);
+        formData.append("classification", salesItemDto.classification);
+        formData.append("coatingMethod", salesItemDto.coatingMethod);
+        formData.append("remark", salesItemDto.remark);
+
+        // 2. 'operationIds'는 배열이므로 백엔드가 배열로 인식하도록 처리합니다.
+        //    - Spring Boot/Java 환경에서는 배열을 JSON 문자열로 보내고 백엔드에서 @RequestPart("operationIds")를 사용하는 것이 가장 일반적입니다.
+        //    - 따라서 배열 필드는 다시 JSON.stringify()를 사용하여 문자열로 보냅니다.
+        formData.append("operationIds", JSON.stringify(salesItemDto.operationIds));
+
+
+// 3. 파일은 'file'이라는 키로 FormData에 추가합니다.
+if (file) formData.append("file", file);
+
+console.log("📦 FormData 내용 (개별 필드):");
+formData.forEach((value, key) => {
+    // 배열 필드는 문자열로 변환되어 표시됨
+    console.log(` ${key}:`, value);
+});
+        
         try {
-            await registerSalesItem(salesItemDto);
-            alert("품목 등록 완료!");
-            handleReset();
+            // registerSalesItem 함수는 formData를 받지 않고 salesItemDto를 받는다고 가정하고 수정하지 않음.
+            // 만약 이미지까지 한 번에 보내야 한다면 registerSalesItem(formData)로 수정 필요
+            const response = await fetch('/api/sales-items', {
+                method: 'POST',
+                // FormData를 사용할 때는 'Content-Type': 'multipart/form-data' 헤더를 수동으로 설정하지 *않습니다*.
+                // 브라우저가 알아서 경계를 포함한 올바른 헤더를 설정해 줍니다.
+                body: formData, 
+            });
+            if (response.ok) {
+                alert('등록이 완료되었습니다!');
+                handleReset();
+                // 3. 등록 성공 시 원하는 경로로 네비게이트합니다.
+                // 예를 들어, 메인 페이지나 등록된 글 목록 페이지로 이동할 수 있습니다.
+                navigate('/sales/item/list'); // 또는 '/posts', '/detail/${newPostId}' 등으로 변경하세요.
+            } else {
+                // ... 에러 처리 ...
+                alert('등록에 실패했습니다.');
+            }
         } catch (error) {
             console.error("등록 실패:", error);
             alert("품목 등록에 실패했습니다.");
@@ -237,15 +303,16 @@ const SalesItemRegisterPage: React.FC = () => {
         });
         setFile(null);
         setPreview("");
-        setSelectedOperationIds([]);
-        setSearchKeyword(""); 
-        setActualSearchTerm(""); 
+        setSelectedOperations([]); // ⭐️ [수정] 리셋 시 selectedOperations 초기화
+        setSearchKeyword("");
+        setActualSearchTerm("");
         setSearchType("전체");
     };
 
     // 스타일 객체 (유지)
     const styles = {
-        searchContainer: { 
+        // ... (스타일 객체 내용은 동일하게 유지)
+        searchContainer: {
             display: "flex",
             alignItems: "center",
             gap: "8px",
@@ -278,6 +345,8 @@ const SalesItemRegisterPage: React.FC = () => {
             borderRadius: "8px",
             overflow: "hidden",
             backgroundColor: "white",
+            maxHeight: "300px", // 테이블 높이 제한
+            overflowY: 'auto' as const, // 스크롤바 추가
         },
         table: {
             width: "100%",
@@ -290,6 +359,9 @@ const SalesItemRegisterPage: React.FC = () => {
             textAlign: "center" as const,
             fontWeight: 600,
             fontSize: "15px",
+            position: 'sticky' as const, // 테이블 헤더 고정
+            top: 0,
+            zIndex: 10,
             borderTopLeftRadius: first ? "8px" : "0px",
             borderTopRightRadius: last ? "8px" : "0px",
         }),
@@ -300,6 +372,28 @@ const SalesItemRegisterPage: React.FC = () => {
             fontSize: "14px",
         },
         tdHover: { backgroundColor: "#f9fafb" },
+        routingBox: {
+            border: "1px solid #ddd",
+            borderRadius: "6px",
+            padding: "12px",
+            marginTop: "12px",
+            minHeight: "100px",
+            display: "flex",
+            flexWrap: "wrap" as const,
+            gap: "8px",
+            backgroundColor: "#fff",
+        },
+        routingItem: {
+            display: "flex",
+            alignItems: "center",
+            padding: "6px 12px",
+            borderRadius: "20px",
+            backgroundColor: "#e0f2fe", // Light blue background
+            border: "1px solid #38bdf8",
+            color: "#0369a1", // Darker text color
+            fontWeight: "600",
+            fontSize: "14px",
+        },
     };
 
     return (
@@ -327,14 +421,13 @@ const SalesItemRegisterPage: React.FC = () => {
                                 gap: "12px",
                             }}
                         >
-                            {/* 2열 입력 필드 */}
+                            {/* 2열 입력 필드 (파트너명 등) - 변경 없음 */}
                             {[
                                 {
                                     label: "업체명",
                                     name: "partnerId",
                                     type: "select",
-                                    // ⭐️ [수정] partners 사용
-                                    options: partners, 
+                                    options: partners,
                                 },
                                 { label: "품목명", name: "itemName" },
                                 { label: "품목번호", name: "itemCode" },
@@ -367,9 +460,9 @@ const SalesItemRegisterPage: React.FC = () => {
                                         <Select
                                             name={field.name}
                                             value={
-                                            field.name === 'partnerId'
-                                                ? (form.partnerId === null ? "" : form.partnerId)
-                                                : form[field.name as keyof typeof form]
+                                                field.name === 'partnerId'
+                                                    ? (form.partnerId === null ? "" : form.partnerId)
+                                                    : form[field.name as keyof typeof form]
                                             }
                                             onChange={handleChange}
                                             fullWidth
@@ -377,35 +470,34 @@ const SalesItemRegisterPage: React.FC = () => {
                                             inputProps={{ sx: { fontSize: 18 } }}
                                         >
                                             {field.name === 'partnerId' ? (
-                                            [
-                                                <MenuItem key="placeholder-select" value="" sx={{ fontSize: 17, color: '#999' }}>
-                                                --- 업체 선택 ---
-                                                </MenuItem>,
-                                                // ⭐️ [핵심 수정] partnerName 대신 option.name 사용
-                                                ...(Array.isArray(field.options)
-                                                ? (field.options as PartnerOption[]).map((option) => (
-                                                        <MenuItem 
-                                                            key={option.partnerId} 
-                                                            value={option.partnerId} 
-                                                            sx={{ fontSize: 17 }}
-                                                        >
-                                                            {option.name} 
-                                                        </MenuItem>
+                                                [
+                                                    <MenuItem key="placeholder-select" value="" sx={{ fontSize: 17, color: '#999' }}>
+                                                        --- 업체 선택 ---
+                                                    </MenuItem>,
+                                                    ...(Array.isArray(field.options)
+                                                        ? (field.options as PartnerOption[]).map((option) => (
+                                                            <MenuItem
+                                                                key={option.partnerId}
+                                                                value={option.partnerId}
+                                                                sx={{ fontSize: 17 }}
+                                                            >
+                                                                {option.name}
+                                                            </MenuItem>
                                                         ))
-                                                : [])
-                                            ]
+                                                        : [])
+                                                ]
                                             ) : (
-                                            // 일반 select (classification, coatingMethod)
-                                            Array.isArray(field.options)
-                                                ? (field.options as string[]).map((option) => (
+                                                // 일반 select (classification, coatingMethod)
+                                                Array.isArray(field.options)
+                                                    ? (field.options as string[]).map((option) => (
                                                         <MenuItem key={option} value={option} sx={{ fontSize: 17 }}>
-                                                        {option}
+                                                            {option}
                                                         </MenuItem>
-                                                        ))
-                                                : null
+                                                    ))
+                                                    : null
                                             )}
                                         </Select>
-                                        ) : (
+                                    ) : (
                                         <TextField
                                             name={field.name}
                                             value={form[field.name as keyof typeof form]}
@@ -413,7 +505,7 @@ const SalesItemRegisterPage: React.FC = () => {
                                             fullWidth
                                             inputProps={{ style: { fontSize: 17 } }}
                                         />
-                                        )}
+                                    )}
 
                                 </div>
                             ))}
@@ -453,6 +545,20 @@ const SalesItemRegisterPage: React.FC = () => {
                                 라우팅
                             </label>
 
+                            {/* ⭐️ [추가] 선택된 공정을 순서대로 보여주는 영역 */}
+                            <div style={styles.routingBox}>
+                                {selectedOperations
+                                    .sort((a, b) => a.order - b.order) // 순서(order) 기준으로 정렬
+                                    .map((item, index) => (
+                                        <div key={item.operationId} style={styles.routingItem}>
+                                            {item.order}. {item.processName} ({item.processCode})
+                                        </div>
+                                    ))}
+                                {selectedOperations.length === 0 && (
+                                    <span style={{ color: '#999', fontSize: '15px' }}>선택된 공정이 없습니다.</span>
+                                )}
+                            </div>
+
                             {/* 공정 검색 및 조회 */}
                             <h3
                                 style={{
@@ -460,6 +566,7 @@ const SalesItemRegisterPage: React.FC = () => {
                                     fontWeight: "600",
                                     marginBottom: "12px",
                                     color: "#1f2937",
+                                    marginTop: "24px",
                                 }}
                             >
                                 Q 공정 검색
@@ -482,16 +589,16 @@ const SalesItemRegisterPage: React.FC = () => {
                                     <input
                                         style={styles.input}
                                         placeholder="공정 코드, 공정명, 내용으로 검색해 주세요."
-                                        value={searchKeyword} 
-                                        onChange={(e) => setSearchKeyword(e.target.value)} 
-                                        onKeyDown={handleSearchKeyDown} 
+                                        value={searchKeyword}
+                                        onChange={(e) => setSearchKeyword(e.target.value)}
+                                        onKeyDown={handleSearchKeyDown}
                                     />
                                 </div>
 
                                 {/* 검색 버튼에 onClick 이벤트 연결 */}
-                                <button 
-                                    type="button" 
-                                    onClick={handleSearch} 
+                                <button
+                                    type="button"
+                                    onClick={handleSearch}
                                     style={styles.searchButton}
                                 >
                                     <svg
@@ -519,7 +626,7 @@ const SalesItemRegisterPage: React.FC = () => {
                                     marginBottom: "8px",
                                 }}
                             >
-                                총{" "}
+                                총
                                 <span style={{ color: "#2563eb", fontWeight: "bold" }}>
                                     {currentData.length.toLocaleString()}
                                 </span>
@@ -537,7 +644,7 @@ const SalesItemRegisterPage: React.FC = () => {
                                             <th style={styles.th(false, true)}>소요 시간 (min)</th>
                                         </tr>
                                     </thead>
-                                    
+
                                     <tbody>{currentData.length === 0 ? (
                                         <tr key="no-data">
                                             <td colSpan={5} style={styles.td}>
@@ -546,6 +653,8 @@ const SalesItemRegisterPage: React.FC = () => {
                                         </tr>
                                     ) : (
                                         currentData.map((item) => {
+                                            // ⭐️ [수정] selectedOperations를 기준으로 체크 상태 확인
+                                            const isChecked = selectedOperations.some(op => op.operationId === item.operationId);
                                             const isHovered = hoveredRow === item.operationId;
                                             return (
                                                 <tr
@@ -557,9 +666,7 @@ const SalesItemRegisterPage: React.FC = () => {
                                                     <td style={{ ...styles.td, width: "5%" }}>
                                                         <input
                                                             type="checkbox"
-                                                            checked={selectedOperationIds.includes(
-                                                                item.operationId
-                                                            )}
+                                                            checked={isChecked} // ⭐️ isChecked 사용
                                                             onChange={() =>
                                                                 handleCheckboxChange(item.operationId)
                                                             }
