@@ -35,7 +35,7 @@ const SortableRow = ({
   setSelectedId,
   isEditMode,
   handleNameChange,
-  operations, // 추가: 전체 operations 전달
+  operations,
 }: {
   row: Operation;
   idx: number;
@@ -57,15 +57,14 @@ const SortableRow = ({
 
   return (
     <tr ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <td style={{ padding: '10px' }}>{row.operationId}</td>
-      <td style={{ padding: '10px' }}>
+      <td style={{ padding: '10px', textAlign: 'center' }}>{row.operationId}</td>
+      <td style={{ padding: '10px', textAlign: 'center' }}>
         {isEditMode ? (
           <select
             value={row.name}
             onChange={(e) => handleNameChange(row.operationId, e.target.value)}
-            style={{ fontSize: '15px', padding: '4px' }}
+            style={{ fontSize: '15px', padding: '4px', textAlign: 'center' }}
           >
-            {/* 더미 배열 제거, 백엔드에서 받아온 공정명을 옵션으로 */}
             {operations.map((op) => (
               <option key={op.operationId} value={op.name}>
                 {op.name}
@@ -79,6 +78,7 @@ const SortableRow = ({
       <td
         style={{
           padding: '10px',
+          textAlign: 'center',
           backgroundColor: row.status === 'COMPLETED' ? '#e8f5e9' : 'transparent',
           color: row.status === 'COMPLETED' ? '#2e7d32' : 'inherit',
           fontWeight: row.status === 'COMPLETED' ? 'bold' : 'normal',
@@ -107,11 +107,10 @@ const ProcessStatusPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
 
-  // 전체 공정 리스트 불러오기
   const loadOperations = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/info/routing/status`);
-      const data = response.data.content || response.data; // pageable 데이터 처리
+      const data = response.data.content || response.data;
       setOperations(Array.isArray(data) ? data : [data]);
     } catch (err) {
       console.error('공정 데이터를 불러오지 못했습니다.', err);
@@ -188,13 +187,13 @@ const ProcessStatusPage: React.FC = () => {
           strategy={verticalListSortingStrategy}
         >
           <div style={common.tableContainer}>
-            <table style={{ ...common.table, fontSize: '16px' }}>
+            <table style={{ ...common.table, fontSize: '16px', textAlign: 'center' }}>
               <thead>
                 <tr>
-                  <th style={{ ...common.th(true, false), width: '120px' }}>No.</th>
-                  <th style={{ ...common.th(false, false), width: '200px' }}>공정명</th>
-                  <th style={{ ...common.th(false, false), width: '160px' }}>시작시간</th>
-                  <th style={{ ...common.th(false, false), width: '100px' }}>선택</th>
+                  <th style={{ ...common.th(true, false), width: '120px', textAlign: 'center' }}>No.</th>
+                  <th style={{ ...common.th(false, false), width: '200px', textAlign: 'center' }}>공정명</th>
+                  <th style={{ ...common.th(false, false), width: '160px', textAlign: 'center' }}>시작시간</th>
+                  <th style={{ ...common.th(false, false), width: '100px', textAlign: 'center' }}>선택</th>
                 </tr>
               </thead>
               <tbody>
@@ -207,7 +206,7 @@ const ProcessStatusPage: React.FC = () => {
                     setSelectedId={setSelectedId}
                     isEditMode={isEditMode}
                     handleNameChange={handleNameChange}
-                    operations={operations} // 전달
+                    operations={operations}
                   />
                 ))}
               </tbody>
@@ -216,23 +215,45 @@ const ProcessStatusPage: React.FC = () => {
         </SortableContext>
       </DndContext>
 
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', marginTop: '16px', marginRight: '20px' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          marginTop: '16px',
+          marginRight: '20px',
+        }}
+      >
         <p style={{ fontSize: '15px', color: '#555', fontStyle: 'italic', marginBottom: '8px' }}>
           시작한 공정은 시간이 표기되며 작업완료된 공정은 초록색으로 표시됩니다.
         </p>
 
         <div style={{ display: 'flex', gap: '10px' }}>
           <button
-            style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px', padding: '8px 16px', fontSize: '15px', cursor: 'pointer' }}
+            style={{
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '15px',
+              cursor: 'pointer',
+            }}
             onClick={handleStart}
           >
             다음 공정
           </button>
           <button
-            style={{ backgroundColor: '#fff', border: '1px solid #ccc', borderRadius: '8px', padding: '8px 16px', fontSize: '15px', cursor: 'pointer' }}
+            style={{
+              backgroundColor: '#fff',
+              border: '1px solid #ccc',
+              borderRadius: '8px',
+              padding: '8px 16px',
+              fontSize: '15px',
+              cursor: 'pointer',
+            }}
             onClick={handleComplete}
           >
-            완료 처리
+            완료
           </button>
           <button
             style={{
