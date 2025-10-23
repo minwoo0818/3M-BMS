@@ -87,7 +87,7 @@ const SalesItemOutboundPage: React.FC = () => {
       JSON.stringify({
         inboundId,
         qty: parseInt(qty),
-        shippedAt: date + "T00:00:00+09:00",
+        shippedAt: date,
       })
     );
 
