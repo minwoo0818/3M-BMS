@@ -44,6 +44,7 @@ export interface SalesInboundHistoryItem {
   remark: string; // SalesItem의 비고
   isCancelled: boolean; // 입고 취소 여부
   createdAt: string; // 입고 등록일시
+  isOutboundProcessed: boolean; //출고 완료 여부
 }
 
 // ====================================================================

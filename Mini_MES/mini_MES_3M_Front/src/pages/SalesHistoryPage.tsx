@@ -6,6 +6,9 @@ import { Typography, Button, TextField, Stack } from "@mui/material";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parseISO, isValid } from "date-fns";
+import axios from "axios";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 import {
   getSalesInboundHistory,
@@ -19,6 +22,7 @@ import type {
 import {
   cancelSalesOutboundHistory,
   getSalesoutboundHistory,
+  updateSalesOutboundHistory,
 } from "../api/salesItemOutboundHistoryApi";
 import type {
   SalesOutboundHistoryItem,
@@ -108,6 +112,7 @@ export default function SalesHistoryQueryPage() {
   const [editingErrors2, setEditingErrors2] = useState<{
     qty?: string;
     shippedAt?: string;
+    general?: string;
   }>({});
 
   // --- 스타일 정의 ---
@@ -337,6 +342,23 @@ export default function SalesHistoryQueryPage() {
     []
   );
 
+  const handleInlineInputChange2 = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setEditingData2((prev) =>
+        prev
+          ? { ...prev, [name]: name === "qty" ? Number(value) : value }
+          : null
+      );
+      setEditingErrors2((prev) => ({
+        ...prev,
+        [name]: undefined,
+        general: undefined,
+      }));
+    },
+    []
+  );
+
   const handleInlineDateChange = useCallback((date: Date | null) => {
     if (date && isValid(date)) {
       setEditingData((prev) =>
@@ -348,6 +370,21 @@ export default function SalesHistoryQueryPage() {
     setEditingErrors((prev) => ({
       ...prev,
       receivedAt: undefined,
+      general: undefined,
+    }));
+  }, []);
+
+  const handleInlineDateChange2 = useCallback((date: Date | null) => {
+    if (date && isValid(date)) {
+      setEditingData2((prev) =>
+        prev ? { ...prev, shippedAt: format(date, "yyyy-MM-dd") } : null
+      );
+    } else {
+      setEditingData2((prev) => (prev ? { ...prev, shippedAt: "" } : null));
+    }
+    setEditingErrors2((prev) => ({
+      ...prev,
+      shippedAt: undefined,
       general: undefined,
     }));
   }, []);
@@ -394,11 +431,55 @@ export default function SalesHistoryQueryPage() {
     }
   };
 
+  const handleSaveClick2 = async (outboundId: number) => {
+    if (!editingData2) return;
+
+    const newErrors: { qty?: string; shippedAt?: string; general?: string } =
+      {};
+    if (isNaN(editingData2.qty) || editingData2.qty <= 0) {
+      // editedInboundData 대신 editingData 사용
+      newErrors.qty = "출고 수량은 1개 이상이어야 합니다.";
+    }
+    if (!editingData2.shippedAt || !isValid(parseISO(editingData2.shippedAt))) {
+      newErrors.shippedAt = "유효한 출고 일자를 선택해주세요.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setEditingErrors2(newErrors);
+      return;
+    }
+    setEditingErrors2({});
+
+    try {
+      await updateSalesOutboundHistory(outboundId, editingData2);
+      alert("출고 이력이 성공적으로 수정되었습니다.");
+      setEditingOutboundId(null);
+      setEditingData2(null);
+      // 수정 후에는 현재 적용된 검색어로 목록을 다시 불러옴
+      fetchOutboundHistory(activeSearchTerm);
+    } catch (err: any) {
+      console.error("출고 이력 수정 실패:", err);
+      if (err.response && err.response.data) {
+        setEditingErrors2({
+          general:
+            err.response.data.message ||
+            "출고 이력 수정 중 오류가 발생했습니다.",
+        });
+      } else {
+        setEditingErrors2({
+          general: "출고 이력 수정 중 네트워크 오류가 발생했습니다.",
+        });
+      }
+    }
+  };
+
   const handleCancelEditClick = useCallback(() => {
     setEditingInboundId(null);
     setEditingOutboundId(null);
     setEditingData(null);
+    setEditingData2(null);
     setEditingErrors({});
+    setEditingErrors2({});
   }, []);
 
   // --- 삭제(취소) 로직 ---
@@ -462,6 +543,79 @@ export default function SalesHistoryQueryPage() {
       }
     }
   };
+
+  const handleExcelDownload = async () => {
+    try {
+      const res = await axios.get(`/order/history/outbound`);
+      const outboundData = res.data?.content || res.data;
+
+      if (!Array.isArray(outboundData) || outboundData.length === 0) {
+        alert("다운로드할 데이터가 없습니다.");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(outboundData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "출고 이력 목록");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type: "application/octet-stream",
+      });
+
+      saveAs(blob, "출고 이력 목록.xlsx");
+    } catch (err) {
+      console.error("엑셀 다운로드 오류:", err);
+      alert("엑셀 다운로드 중 오류가 발생했습니다.");
+    }
+  };
+
+  // useEffect(() => {
+  //   axios
+  //     .get(`/order/history/outbound`)
+  //     .then((res) => {
+  //       const result = res.data?.content || res.data;
+  //       setOutboundHistory(Array.isArray(result) ? result : []); // ✅ 수정
+  //     })
+  //     .catch((err) => {
+  //       console.error("데이터 조회 실패:", err);
+  //       setOutboundHistory([]); // ✅ fallback
+  //     });
+  // }, []);
+
+  // const handleExcelDownload2 = async () => {
+  //   try {
+  //     const res = await axios.get(`/order/history/outbound`);
+  //     const outboundData = res.data?.content || res.data;
+
+  //     if (!Array.isArray(outboundData) || outboundData.length === 0) {
+  //       alert("다운로드할 데이터가 없습니다.");
+  //       return;
+  //     }
+
+  //     const worksheet = XLSX.utils.json_to_sheet(outboundData);
+  //     const workbook = XLSX.utils.book_new();
+  //     XLSX.utils.book_append_sheet(workbook, worksheet, "출고 이력 목록");
+
+  //     const excelBuffer = XLSX.write(workbook, {
+  //       bookType: "xlsx",
+  //       type: "array",
+  //     });
+
+  //     const blob = new Blob([excelBuffer], {
+  //       type: "application/octet-stream",
+  //     });
+
+  //     saveAs(blob, "출고 이력 목록.xlsx");
+  //   } catch (err) {
+  //     console.error("엑셀 다운로드 오류:", err);
+  //     alert("엑셀 다운로드 중 오류가 발생했습니다.");
+  //   }
+  // };
 
   // ----------------------------------------------------
   // 페이징 로직
@@ -753,7 +907,9 @@ export default function SalesHistoryQueryPage() {
                                 color="primary"
                                 size="small"
                                 onClick={() => handleEditClick(item)}
-                                disabled={item.isCancelled}
+                                disabled={
+                                  item.isCancelled || item.isOutboundProcessed
+                                }
                                 sx={{ fontSize: "0.7rem" }}
                               >
                                 수정
@@ -763,7 +919,9 @@ export default function SalesHistoryQueryPage() {
                                 color="error"
                                 size="small"
                                 onClick={() => handleDelete(item.inboundId)}
-                                disabled={item.isCancelled}
+                                disabled={
+                                  item.isCancelled || item.isOutboundProcessed
+                                }
                                 sx={{ fontSize: "0.7rem" }}
                               >
                                 삭제
@@ -775,7 +933,9 @@ export default function SalesHistoryQueryPage() {
                                 onClick={() =>
                                   handleOutboundDelete(item.inboundId)
                                 }
-                                disabled={item.isCancelled}
+                                disabled={
+                                  item.isCancelled || item.isOutboundProcessed
+                                }
                                 sx={{ fontSize: "0.7rem" }}
                               >
                                 작업지시서
@@ -874,15 +1034,15 @@ export default function SalesHistoryQueryPage() {
 
                       {/* 출고 수량 - 인라인 편집 */}
                       <td style={styles.td}>
-                        {isEditing && editingData ? (
+                        {isEditing && editingData2 ? (
                           <TextField
                             type="number"
                             name="qty"
-                            value={editingData.qty}
-                            onChange={handleInlineInputChange}
+                            value={editingData2.qty}
+                            onChange={handleInlineInputChange2}
                             size="small"
-                            error={!!editingErrors.qty}
-                            helperText={editingErrors.qty}
+                            error={!!editingErrors2.qty}
+                            helperText={editingErrors2.qty}
                             inputProps={{ min: 1 }}
                             sx={{
                               "& .MuiInputBase-input": {
@@ -906,7 +1066,7 @@ export default function SalesHistoryQueryPage() {
                                 ? parseISO(editingData2.shippedAt)
                                 : null
                             }
-                            onChange={handleInlineDateChange}
+                            onChange={handleInlineDateChange2}
                             dateFormat="yyyy-MM-dd"
                             customInput={
                               <TextField
@@ -947,7 +1107,9 @@ export default function SalesHistoryQueryPage() {
                                 variant="contained"
                                 color="success"
                                 size="small"
-                                onClick={() => handleSaveClick(item.outboundId)}
+                                onClick={() =>
+                                  handleSaveClick2(item.outboundId)
+                                }
                                 sx={{ fontSize: "0.7rem" }}
                               >
                                 저장
@@ -1013,6 +1175,17 @@ export default function SalesHistoryQueryPage() {
             )}
           </div>
         )}
+
+      {/* 엑셀 다운로드 버튼 */}
+      {/* <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: "20px",
+        }}
+      >
+        <button onClick={handleExcelDownload}>📥 EXCEL 다운로드</button>
+      </div> */}
 
       {/* 입고이력 페이징 UI */}
       {!isLoading &&

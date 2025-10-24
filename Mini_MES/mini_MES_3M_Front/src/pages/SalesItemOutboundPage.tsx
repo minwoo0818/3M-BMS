@@ -3,6 +3,9 @@ import { useCommonStyles } from "../style/useCommonStyles";
 import { useProcessStyles } from "../style/useProcessStyles";
 import { useSalesHistoryStyles } from "../style/useSalesHistoryStyles";
 import type { SalesOutboundListDto } from "../types/SalesItemOutbound";
+import axios from "axios";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -120,8 +123,54 @@ const SalesItemOutboundPage: React.FC = () => {
       .catch((err) => console.error("등록 오류:", err));
   };
 
-  const handleExcelDownload = () => {
-    console.log("엑셀 다운로드");
+  useEffect(() => {
+    axios
+      .get(
+        `${API_BASE_URL}/order/outbound/list?page=${currentPage}&limit=10&searchType=${searchType}&searchTerm=${searchKeyword}`
+      )
+      .then((res) => {
+        // ✅ Page 형태일 경우 content만 세팅
+        setData(res.data.content || res.data);
+      })
+      .catch((err) => {
+        console.error("데이터 조회 실패:", err);
+      });
+  }, []);
+
+  const handleExcelDownload = async () => {
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}/order/outbound/list?page=${currentPage}&limit=10&searchType=${searchType}&searchTerm=${searchKeyword}`
+      );
+
+      // ✅ 백엔드가 Page<SalesOutbound> 형태라면 content 안에 배열이 있음
+      const outboundData = res.data.content || res.data;
+
+      if (!Array.isArray(outboundData) || outboundData.length === 0) {
+        alert("다운로드할 데이터가 없습니다.");
+        return;
+      }
+
+      // JSON → 엑셀 시트
+      const worksheet = XLSX.utils.json_to_sheet(outboundData);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "출고 등록 목록");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type: "application/octet-stream",
+      });
+
+      saveAs(blob, "출고 등록 목록.xlsx");
+    } catch (err) {
+      console.error("엑셀 다운로드 오류:", err);
+      alert("엑셀 다운로드 중 오류가 발생했습니다.");
+    }
   };
 
   return (

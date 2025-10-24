@@ -109,7 +109,8 @@ public class SalesItemInboundService {
                             si.getReceivedAt(),
                             si.getItem().getRemark(), // SalesItem의 비고
                             si.getIsCancelled(),
-                            si.getCreatedAt()
+                            si.getCreatedAt(),
+                            si.getIsOutboundProcessed()
                     );
                 })
                 .collect(Collectors.toList());
@@ -157,11 +158,18 @@ public class SalesItemInboundService {
             throw new IllegalArgumentException("이미 취소된 입고는 수정할 수 없습니다.");
         }
 
+        int updateQty = salesInbound.getQty() - request.getQty();
+        //원래 100개 -> 새로 110개 => -10
+        //원래 110개 -> 새로 100개 => 10
+
         // 수량 및 일자 업데이트
         salesInbound.setQty(request.getQty());
         salesInbound.setReceivedAt(request.getReceivedAt());
 
+        salesInbound.setRemainingQty(salesInbound.getRemainingQty() - updateQty);
+
         SalesInbound updatedInbound = salesInboundRepository.save(salesInbound);
+
 
         // 업데이트된 정보 반환 DTO로 변환 (getSalesInboundDetail과 동일)
         return getSalesInboundDetail(updatedInbound.getInboundId());
