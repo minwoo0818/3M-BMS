@@ -13,3 +13,9 @@ npm install axios
 npm install react-datepicker
 
 npm install date-fns
+
+npm install xlsx
+
+npm install file-saver
+
+npm install --save-dev @types/file-saver

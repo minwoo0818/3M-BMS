@@ -26,4 +26,5 @@ public class SalesInboundHistoryResponseDto {
     private String remark; // SalesItem의 비고
     private Boolean isCancelled; // 입고 취소 여부
     private OffsetDateTime createdAt; // 입고 등록일시
+    private Boolean isOutboundProcessed;
 }
