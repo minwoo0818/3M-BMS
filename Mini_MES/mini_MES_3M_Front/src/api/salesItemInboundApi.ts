@@ -72,3 +72,8 @@ export const updateSalesInboundHistory = async (inboundId: number, requestData: 
 export const cancelSalesInboundHistory = async (inboundId: number): Promise<void> => {
   await api.patch(`/sales-inbound/history/${inboundId}/cancel`);
 };
+
+export const getWorkOrder = async (inboundId: number) => {
+  const response = await axios.get(`/api/work-order/${inboundId}`);
+  return response.data; // WorkOrderResponseDto 형태
+};

@@ -188,6 +188,11 @@ export default function SalesHistoryQueryPage() {
     [searchKey]
   ); // searchKey만 의존성 배열에, searchTerm은 이제 인자로 받으므로 제외
 
+  const handleCreateWorkOrder = useCallback((inboundId: number) => {
+  navigate(`/work-order/${inboundId}`); 
+  // 또는 `/work-order/create/${inboundId}` ← 실제 라우터에 맞게 조정
+}, [navigate]);
+
   // 출고 이력 목록 불러오기 (activeSearchTerm에 따라 호출)
   const fetchOutboundHistory = useCallback(
     async (keyword: string) => {
@@ -772,9 +777,7 @@ export default function SalesHistoryQueryPage() {
                                 variant="contained"
                                 color="success"
                                 size="small"
-                                // onClick={() =>
-                                //   handleOutboundDelete(item.inboundId)
-                                // }
+                               onClick={() => handleCreateWorkOrder(item.inboundId)}
                                 disabled={item.isCancelled}
                                 sx={{ fontSize: "0.7rem" }}
                               >
