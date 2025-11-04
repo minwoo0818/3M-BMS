@@ -1,0 +1,142 @@
+///////////////////////////////////////////////////////////
+//  나이스파크 차량 출입 로그
+///////////////////////////////////////////////////////////
+Table NICEPARK_VEHICLE_LOG {
+  log_id bigint [primary key, increment]
+  car_number varchar(10) [not null]
+  access_time timestamp [not null]          // 출입 일시 (YYYY-MM-DD HH:MM:SS)
+  created_at timestamp [default: `now()`]   // 기록 생성 일시
+
+  Indexes {
+    car_number
+  }
+}
+
+///////////////////////////////////////////////////////////
+//  에스원 직원 출입 로그
+///////////////////////////////////////////////////////////
+Table S1_EMPLOYEE_LOG {
+  log_id bigint [primary key, increment]
+  member_id varchar(10) [not null]
+  employee_name varchar(10) [not null]
+  access_time timestamp [not null]
+  created_at timestamp [default: `now()`]
+
+  Indexes {
+    member_id
+  }
+}
+
+///////////////////////////////////////////////////////////
+//  연료 종류 및 탄소 배출 계수 (신규 추가)
+///////////////////////////////////////////////////////////
+Table FUEL_TYPE {
+  fuel_type_id bigint [primary key, increment]
+  fuel_type_name varchar(10) [not null, unique]    // 연료 종류 (휘발유, 경유, 전기 등)
+  carbon_emission_factor numeric(6,3) [not null]   // 탄소 배출 계수 (kgCO2e/단위)
+  unit_type varchar(10) [not null]                 // 단위 유형 (예: km, kWh)
+  updated_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  차종별 정보 (연비 포함)
+///////////////////////////////////////////////////////////
+Table CAR_MODEL {
+  car_model_id bigint [primary key, increment]
+  car_model_name varchar(10) [not null, unique]   // 차종명 (예: 승용차, SUV)
+  fuel_type_id bigint [not null]                  // FUEL_TYPE 참조
+  fuel_efficiency numeric(6,2) [not null]         // 연비 (km/L 또는 km/kWh)
+  updated_at timestamp [default: `now()`]
+}
+Ref: CAR_MODEL.fuel_type_id > FUEL_TYPE.fuel_type_id
+
+///////////////////////////////////////////////////////////
+//  거래처 (업체) - 납품 업체 등 거래처 정보 관리
+///////////////////////////////////////////////////////////
+Table COMPANY {
+  company_id bigint [primary key, increment]
+  company_name varchar(50) [not null, unique] // 업체명
+  round_trip_distance numeric(10,2)            // 편도 거리 (자동 입력 가능)
+  delivery_type varchar(10)                    // 납품 구분 (예: 정기, 비정기)
+  delivery_item1 varchar(10)
+  delivery_item2 varchar(10)
+  delivery_item3 varchar(10)
+  registered_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  차량 - 실제 운행 단위 (사원, 회사, 차종, 목적 등)
+///////////////////////////////////////////////////////////
+Table VEHICLE {
+  car_id bigint [primary key, increment]
+  car_number varchar(10) [not null, unique]                // 차량 번호
+  car_model_id bigint [not null]                           // CAR_MODEL 참조
+  driver_member_id varchar(10)                             // 주 운전자 사번 (S1_EMPLOYEE_LOG.member_id 연결)
+  company_id bigint [not null]                             // 소속 회사
+  operation_purpose varchar(10) [not null]                // 운행 목적 (예: 납품, 출장 등)
+  driving_distance numeric(10,2) [not null]                // 기준 운행 거리 (km)
+  calculated_scope int [not null]                         // Scope (예: Scope1 = 1, Scope3 = 3)
+  registered_at timestamp [default: `now()`]
+}
+Ref: VEHICLE.car_model_id > CAR_MODEL.car_model_id
+Ref: VEHICLE.company_id > COMPANY.company_id
+
+///////////////////////////////////////////////////////////
+//  탄소 배출 로그 - 일자별 차량별 총 배출량
+///////////////////////////////////////////////////////////
+Table CARBON_EMISSION_LOG {
+  emission_log_id bigint [primary key, increment]
+  car_id bigint [not null]                           // VEHICLE 참조
+  operation_date date [not null]                     // 운행 일자
+  daily_calculated_emission numeric(10,3) [not null] // 계산된 배출량 (kgCO2e)
+  calculated_at timestamp [default: `now()`]
+}
+Ref: CARBON_EMISSION_LOG.car_id > VEHICLE.car_id
+
+///////////////////////////////////////////////////////////
+//  탄소 계산 방식 관리
+///////////////////////////////////////////////////////////
+Table CARBON_CALCULATION_METHOD {
+  method_id bigint [primary key, increment]
+  method_name varchar(20) [not null]
+  calculation_formula text [not null]
+  factors_json text                                 // JSON 형태의 요인 데이터
+  is_active boolean [default: true]
+  updated_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  배출 목표 - 연/월별 감축 목표 설정
+///////////////////////////////////////////////////////////
+Table EMISSION_TARGET {
+  target_id bigint [primary key, increment]
+  year integer [not null]
+  month integer                                     // 월별 목표 (NULL이면 연간)
+  target_type varchar(10) [not null]                // 목표 구분 (전체, 업체, Scope)
+  target_scope int                                  // Scope1, Scope3 등
+  target_company_id bigint                          // COMPANY 참조
+  reduction_rate numeric(5,2) [not null]            // 감축률 (%)
+  target_emission numeric(10,3) [not null]          // 목표 배출량 (kgCO2e)
+  set_at timestamp [default: `now()`]
+}
+Ref: EMISSION_TARGET.target_company_id > COMPANY.company_id
+
+///////////////////////////////////////////////////////////
+//  저감 활동 기록
+///////////////////////////////////////////////////////////
+Table REDUCTION_ACTIVITY {
+  activity_id bigint [primary key, increment]
+  activity_period_start date [not null]
+  activity_period_end date [not null]
+  activity_name varchar(255) [not null]
+  activity_details text [not null]
+  cost_amount numeric(15,2)
+  photo_urls text
+  recorded_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  논리적 참조 (FK 제약 없음, 모델링용)
+///////////////////////////////////////////////////////////
+Ref: NICEPARK_VEHICLE_LOG.car_number - VEHICLE.car_number
+Ref: S1_EMPLOYEE_LOG.member_id - VEHICLE.driver_member_id
