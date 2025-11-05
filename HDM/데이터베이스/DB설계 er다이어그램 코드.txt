@@ -136,6 +136,20 @@ Table REDUCTION_ACTIVITY {
 }
 
 ///////////////////////////////////////////////////////////
+//  사용자 계정 관리
+///////////////////////////////////////////////////////////
+Table USER_ACCOUNT {
+  user_id bigint [primary key, increment]           // 사용자 ID
+  username varchar(50) [not null, unique]           // 로그인 아이디
+  password_hash varchar(255) [not null]             // 암호화된 비밀번호
+  role varchar(20) [not null, note: 'admin/viewer'] // 권한 유형
+  last_login timestamp                              	// 마지막 로그인 일시
+  created_at timestamp [default: `now()`]           // 생성일시
+  updated_at timestamp [default: `now()`]           // 수정일시
+}
+
+
+///////////////////////////////////////////////////////////
 //  논리적 참조 (FK 제약 없음, 모델링용)
 ///////////////////////////////////////////////////////////
 Ref: NICEPARK_VEHICLE_LOG.car_number - VEHICLE.car_number
