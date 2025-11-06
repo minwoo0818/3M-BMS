@@ -1,5 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import KakaoMapPage from './pages/KakaoMapPage';
+import SalesRegistrationPage from './pages/SalesRegistrationPage';
 
 function App() {
   return (
@@ -8,7 +8,7 @@ function App() {
         <div style={{ display: "flex" }}>
           <div style={{ flexGrow: 1, padding: "20px" }}>
             <Routes>
-              <Route path="/Kakao" element={<KakaoMapPage />} />
+              <Route path="/Kakao" element={<SalesRegistrationPage />} />
             </Routes>
           </div>
         </div>
