@@ -3,8 +3,8 @@
 ///////////////////////////////////////////////////////////
 Table NICEPARK_VEHICLE_LOG {
   log_id bigint [pk, increment]
-  car_number varchar(10) [not null]
-  access_time timestamp [not null]
+  car_number varchar(20) [not null]
+  access_time timestamp [not null]          // 출입 일시
   created_at timestamp [default: `now()`]
 
   Indexes {
@@ -17,8 +17,8 @@ Table NICEPARK_VEHICLE_LOG {
 ///////////////////////////////////////////////////////////
 Table S1_EMPLOYEE_LOG {
   log_id bigint [pk, increment]
-  member_id varchar(10) [not null]
-  employee_name varchar(20) [not null]
+  member_id varchar(20) [not null]
+  employee_name varchar(50) [not null]
   access_time timestamp [not null]
   created_at timestamp [default: `now()`]
 
@@ -28,115 +28,62 @@ Table S1_EMPLOYEE_LOG {
 }
 
 ///////////////////////////////////////////////////////////
-//  차량 대분류 (예: 승용차, 트럭, 버스)
+//  차량 분류 (대/소분류 통합, 자체 참조)
 ///////////////////////////////////////////////////////////
-Table CAR_MAIN_CATEGORY {
-  main_category_id bigint [pk, increment]
-  main_category_name varchar(30) [not null, unique]
+Table CAR_CATEGORY {
+  category_id bigint [pk, increment]
+  category_name varchar(50) [not null]
+  parent_id bigint                            // 상위 카테고리(대분류) 참조
+  default_efficiency numeric(6,2)            // 기본 연비 (km/L 또는 km/kWh)
+  unit_type varchar(10)                      // 단위 유형
   created_at timestamp [default: `now()`]
-}
-
-///////////////////////////////////////////////////////////
-//  차량 소분류 (예: 대형, 중형, 소형) - 대분류별 세분화
-///////////////////////////////////////////////////////////
-Table CAR_SUB_CATEGORY {
-  sub_category_id bigint [pk, increment]
-  main_category_id bigint [not null]                // CAR_MAIN_CATEGORY 참조
-  sub_category_name varchar(30) [not null]
-  created_at timestamp [default: `now()`]
-}
-Ref: CAR_SUB_CATEGORY.main_category_id > CAR_MAIN_CATEGORY.main_category_id
-
-///////////////////////////////////////////////////////////
-//  차량 기본 연비 및 탄소 계수 (대분류 + 소분류 + 연료)
-///////////////////////////////////////////////////////////
-Table CAR_EFFICIENCY {
-  efficiency_id bigint [pk, increment]
-  main_category_id bigint [not null]                // 대분류 참조
-  sub_category_id bigint [not null]                 // 소분류 참조
-  fuel_type enum('휘발유', '경유', '전기', '수소', 'LPG') [not null]
-  default_efficiency numeric(6,2) [not null]        // 기본 연비 (km/L 또는 km/kWh)
-  carbon_emission_factor numeric(8,4) [not null]    // 탄소 배출 계수 (kgCO2e/단위)
   updated_at timestamp [default: `now()`]
 }
-Ref: CAR_EFFICIENCY.main_category_id > CAR_MAIN_CATEGORY.main_category_id
-Ref: CAR_EFFICIENCY.sub_category_id > CAR_SUB_CATEGORY.sub_category_id
 
 ///////////////////////////////////////////////////////////
-//  차량 모델 (실제 차종)
+//  탄소 배출 계수 관리 (연료별)
+///////////////////////////////////////////////////////////
+Table CARBON_EMISSION_FACTOR {
+  factor_id bigint [pk, increment]
+  fuel_type enum('휘발유','경유','전기','수소','LPG') [not null]
+  emission_factor numeric(8,4) [not null]    // kgCO2e per unit
+  unit_type varchar(10) [not null]           // 'l' or 'kWh'
+  effective_date date [not null]
+  updated_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  차량 모델 (소분류만 FK)
 ///////////////////////////////////////////////////////////
 Table CAR_MODEL {
   car_model_id bigint [pk, increment]
-  car_model_name varchar(50) [not null, unique]        // 모델명 (소나타 등)
-  main_category_id bigint [not null]                   // 대분류 참조
-  sub_category_id bigint [not null]                    // 소분류 참조
-  fuel_type enum('휘발유', '경유', '전기', '수소', 'LPG') [not null]
+  car_model_name varchar(100) [not null, unique]
+  category_id bigint [not null]
+  fuel_type enum('휘발유','경유','전기','수소','LPG') [not null]
+  custom_efficiency numeric(6,2)
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 }
-Ref: CAR_MODEL.main_category_id > CAR_MAIN_CATEGORY.main_category_id
-Ref: CAR_MODEL.sub_category_id > CAR_SUB_CATEGORY.sub_category_id
-
 
 ///////////////////////////////////////////////////////////
 //  거래처 (업체)
 ///////////////////////////////////////////////////////////
 Table COMPANY {
   company_id bigint [pk, increment]
-  company_name varchar(50) [not null, unique]
-  address text [not null]                                  // 업체 주소
+  company_name varchar(100) [not null, unique]
+  address text [not null]
   round_trip_distance numeric(10,2)
-  registered_at timestamp [default: `now()`]
-}
-///////////////////////////////////////////////////////////
-//  생산 공정 정보
-///////////////////////////////////////////////////////////
-Table PROCESS {
-  process_id bigint [pk, increment]
-  process_name varchar(50) [not null, unique]        // 공정명 (예: 절삭, 도장, 조립 등)
-  created_at timestamp [default: `now()`]
-  updated_at timestamp [default: `now()`]
-}
-
-///////////////////////////////////////////////////////////
-//  업체 - 공정 매핑 (N:M 관계)
-///////////////////////////////////////////////////////////
-Table COMPANY_PROCESS_MAP {
-  map_id bigint [pk, increment]
-  company_id bigint [not null]                       // COMPANY 참조
-  process_id bigint [not null]                       // PROCESS 참조
-  created_at timestamp [default: `now()`]
-}
-  Ref: COMPANY_PROCESS_MAP.company_id > COMPANY.company_id
-  Ref: COMPANY_PROCESS_MAP.process_id > PROCESS.process_id
-
-///////////////////////////////////////////////////////////
-//  납품 품목
-///////////////////////////////////////////////////////////
-Table DELIVERY_ITEM {
-  item_id bigint [pk, increment]
-  item_name varchar(50) [not null, unique]
+  process enum('절삭','도장','조립','열처리','기타')
   registered_at timestamp [default: `now()`]
 }
 
 ///////////////////////////////////////////////////////////
-//  업체-납품품목 매핑
+//  업체-납품품목 매핑 (납품 품목 ENUM)
 ///////////////////////////////////////////////////////////
 Table COMPANY_ITEM_MAP {
   map_id bigint [pk, increment]
   company_id bigint [not null]
-  item_id bigint [not null]
-  created_at timestamp [default: `now()`]
-}
-  Ref: COMPANY_ITEM_MAP.company_id > COMPANY.company_id
-  Ref: COMPANY_ITEM_MAP.item_id > DELIVERY_ITEM.item_id
-
-///////////////////////////////////////////////////////////
-//  운행 목적 관리
-///////////////////////////////////////////////////////////
-Table OPERATION_PURPOSE {
-  purpose_id bigint [pk, increment]
-  purpose_name varchar(50) [not null, unique]
+  item_type enum('품목A','품목B','품목C','기타') [not null]
   created_at timestamp [default: `now()`]
 }
 
@@ -146,18 +93,14 @@ Table OPERATION_PURPOSE {
 Table VEHICLE {
   car_id bigint [pk, increment]
   car_number varchar(20) [not null, unique]
-  car_model_id bigint [not null]                           // CAR_MODEL 참조
-  driver_member_id varchar(10)
-  company_id bigint [not null]                             // COMPANY 참조
-  purpose_id bigint [not null]                             // OPERATION_PURPOSE 참조
-  driving_distance numeric(10,2) [not null]
-  calculated_scope int [not null]
-  remark text
+  car_model_id bigint [not null]
+  driver_member_id varchar(20)
+  company_id bigint [not null]
+  operation_purpose enum('납품','출장','출퇴근','기타') [not null]
+  driving_distance numeric(10,2)
+  calculated_scope int
   registered_at timestamp [default: `now()`]
 }
-Ref: VEHICLE.car_model_id > CAR_MODEL.car_model_id
-Ref: VEHICLE.company_id > COMPANY.company_id
-Ref: VEHICLE.purpose_id > OPERATION_PURPOSE.purpose_id
 
 ///////////////////////////////////////////////////////////
 //  탄소 배출 일별 로그
@@ -166,10 +109,9 @@ Table CARBON_EMISSION_DAILY_LOG {
   emission_log_id bigint [pk, increment]
   car_id bigint [not null]
   operation_date date [not null]
-  daily_calculated_emission numeric(10,3) [not null]
+  daily_calculated_emission numeric(12,4) [not null]
   calculated_at timestamp [default: `now()`]
 }
-Ref: CARBON_EMISSION_DAILY_LOG.car_id > VEHICLE.car_id
 
 ///////////////////////////////////////////////////////////
 //  탄소 배출 월별 로그
@@ -179,38 +121,22 @@ Table CARBON_EMISSION_MONTHLY_LOG {
   car_id bigint [not null]
   year integer [not null]
   month integer [not null]
-  total_emission numeric(12,3) [not null]
+  total_emission numeric(14,4) [not null]
   created_at timestamp [default: `now()`]
-}
-Ref: CARBON_EMISSION_MONTHLY_LOG.car_id > VEHICLE.car_id
-
-///////////////////////////////////////////////////////////
-//  탄소 계산 방식
-///////////////////////////////////////////////////////////
-Table CARBON_CALCULATION_METHOD {
-  method_id bigint [pk, increment]
-  method_name varchar(50) [not null]
-  calculation_formula text [not null]
-  description text
-  is_active boolean [default: true]
-  created_at timestamp [default: `now()`]
-  updated_at timestamp [default: `now()`]
 }
 
 ///////////////////////////////////////////////////////////
-//  배출 목표 (감축률 제거)
+//  배출 목표 (target_scope 제거, target_type으로 Scope 관리)
 ///////////////////////////////////////////////////////////
 Table EMISSION_TARGET {
   target_id bigint [pk, increment]
   year integer [not null]
   month integer
-  target_type varchar(20) [not null]
-  target_scope varchar(10)
+  target_type enum('Overall','Company','Scope1','Scope3') [not null]
   target_company_id bigint
-  target_emission numeric(10,3) [not null]
+  target_emission numeric(12,4) [not null]
   set_at timestamp [default: `now()`]
 }
-Ref: EMISSION_TARGET.target_company_id > COMPANY.company_id
 
 ///////////////////////////////////////////////////////////
 //  저감 활동
@@ -219,10 +145,10 @@ Table REDUCTION_ACTIVITY {
   activity_id bigint [pk, increment]
   activity_period_start date [not null]
   activity_period_end date [not null]
-  activity_name varchar(100) [not null]
+  activity_name varchar(200) [not null]
   activity_details text [not null]
   cost_amount numeric(15,2)
-  expected_effect text
+  expected_effect text [note: '저감 활동의 기대 효과']
   recorded_at timestamp [default: `now()`]
 }
 
@@ -235,24 +161,31 @@ Table REDUCTION_ACTIVITY_PHOTO {
   photo_url text [not null]
   uploaded_at timestamp [default: `now()`]
 }
-Ref: REDUCTION_ACTIVITY_PHOTO.activity_id > REDUCTION_ACTIVITY.activity_id
 
 ///////////////////////////////////////////////////////////
 //  사용자 계정 관리
 ///////////////////////////////////////////////////////////
 Table USER_ACCOUNT {
   user_id bigint [pk, increment]
-  username varchar(50) [not null, unique]
+  username varchar(100) [not null, unique]
   password_hash varchar(255) [not null]
-  role varchar(20) [not null, note: 'admin/viewer']
-  is_active boolean [default: true]
+  role enum('super_admin','admin','viewer') [not null]
   last_login timestamp
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 }
 
 ///////////////////////////////////////////////////////////
-//  논리적 참조
+//  관계 정의 (테이블 외부 Ref 문법)
 ///////////////////////////////////////////////////////////
+Ref: CAR_CATEGORY.parent_id > CAR_CATEGORY.category_id
+Ref: CAR_MODEL.category_id > CAR_CATEGORY.category_id
+Ref: COMPANY_ITEM_MAP.company_id > COMPANY.company_id
+Ref: VEHICLE.car_model_id > CAR_MODEL.car_model_id
+Ref: VEHICLE.company_id > COMPANY.company_id
+Ref: CARBON_EMISSION_DAILY_LOG.car_id > VEHICLE.car_id
+Ref: CARBON_EMISSION_MONTHLY_LOG.car_id > VEHICLE.car_id
+Ref: EMISSION_TARGET.target_company_id > COMPANY.company_id
+Ref: REDUCTION_ACTIVITY_PHOTO.activity_id > REDUCTION_ACTIVITY.activity_id
 Ref: NICEPARK_VEHICLE_LOG.car_number - VEHICLE.car_number
 Ref: S1_EMPLOYEE_LOG.member_id - VEHICLE.driver_member_id
