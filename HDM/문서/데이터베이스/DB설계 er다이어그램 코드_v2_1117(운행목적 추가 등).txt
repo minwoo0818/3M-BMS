@@ -1,0 +1,242 @@
+///////////////////////////////////////////////////////////
+//  나이스파크 차량 출입 로그
+///////////////////////////////////////////////////////////
+Table NICEPARK_VEHICLE_LOG {
+  log_id bigint [pk, increment]
+  car_number varchar(20) [not null]
+  access_time timestamp [not null]
+  created_at timestamp [default: `now()`]
+
+  Indexes {
+    car_number
+  }
+}
+
+///////////////////////////////////////////////////////////
+//  에스원 직원 출입 로그
+///////////////////////////////////////////////////////////
+Table S1_EMPLOYEE_LOG {
+  log_id bigint [pk, increment]
+  member_id varchar(20) [not null]
+  employee_name varchar(50) [not null]
+  access_time timestamp [not null]
+  created_at timestamp [default: `now()`]
+
+  Indexes {
+    member_id
+  }
+}
+
+///////////////////////////////////////////////////////////
+//  차량 분류 (대/소 통합, 자기참조)
+///////////////////////////////////////////////////////////
+Table CAR_CATEGORY {
+  category_id bigint [pk, increment]
+  category_name varchar(50) [not null]
+  parent_id bigint                            // 상위 카테고리 참조 (NULL이면 대분류)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  탄소 배출 계수 관리 (연료별)
+///////////////////////////////////////////////////////////
+Table CARBON_EMISSION_FACTOR {
+  factor_id bigint [pk, increment]
+  fuel_type enum('휘발유','경유','전기','수소','LPG') [not null]
+  emission_factor numeric(8,4) [not null]    // kgCO2e per unit
+  unit_type varchar(10) [not null]
+  effective_date date [not null]
+  updated_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  차량 모델 (소분류 FK만 가짐)
+///////////////////////////////////////////////////////////
+Table CAR_MODEL {
+  car_model_id bigint [pk, increment]
+  car_model_name varchar(100) [not null, unique]
+  category_id bigint [not null]               // 소분류 참조 (CAR_CATEGORY에서 parent_id != NULL인 항목을 가리킴)
+  fuel_type enum('휘발유','경유','전기','수소','LPG') [not null]
+  custom_efficiency numeric(6,2)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  거래처 (업체)
+///////////////////////////////////////////////////////////
+Table COMPANY {
+  company_id bigint [pk, increment]
+  company_name varchar(100) [not null, unique]
+  address text [not null]
+  round_trip_distance numeric(10,2)
+  registered_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  업체-납품품목 매핑 (납품 품목 ENUM)
+///////////////////////////////////////////////////////////
+Table COMPANY_ITEM_MAP {
+  map_id bigint [pk, increment]
+  company_id bigint [not null]
+  item_type enum('ROD','Cover End','Plate','Nut') [not null]
+  created_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  생산 공정 (별도 테이블로 관리) + 업체-공정 매핑
+///////////////////////////////////////////////////////////
+Table PROCESS {
+  process_id bigint [pk, increment]
+  process_name varchar(100) [not null, unique]  // 예: 절삭, 도장, 조립 ...
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table COMPANY_PROCESS_MAP {
+  map_id bigint [pk, increment]
+  company_id bigint [not null]
+  process_id bigint [not null]
+  created_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  운행 목적 (별도 테이블로 관리) - 목적별 기본 Scope 관리 가능
+//  차량 테이블은 operation_purpose_id로 참조
+///////////////////////////////////////////////////////////
+Table OPERATION_PURPOSE {
+  purpose_id bigint [pk, increment]
+  purpose_name varchar(10) [not null, unique]  // 예: 납품, 출장, 출퇴근, 기타
+  default_scope int                               // 예: 1=Scope1, 3=Scope3 (기본값)
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table COMPANY_OPERATION_PURPOSE_MAP {
+  map_id bigint [pk, increment]
+  company_id bigint [not null]
+  purpose_id bigint [not null]
+  created_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  제품 분류 (신규) + 업체-제품분류 매핑 (조회용 분류)
+///////////////////////////////////////////////////////////
+Table PRODUCT_CLASS {
+  product_class_id bigint [pk, increment]
+  product_class_name varchar(100) [not null, unique]  // 조회용 분류명
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+Table COMPANY_PRODUCT_CLASS {
+  map_id bigint [pk, increment]
+  company_id bigint [not null]
+  product_class_id bigint [not null]
+  created_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  차량 관리 (VEHICLE) - operation_purpose_id로 변경
+///////////////////////////////////////////////////////////
+Table VEHICLE {
+  car_id bigint [pk, increment]
+  car_number varchar(20) [not null, unique]
+  car_model_id bigint [not null]
+  driver_member_id varchar(20)
+  company_id bigint [not null]
+  operation_purpose_id bigint [not null]         // OPERATION_PURPOSE 참조
+  driving_distance numeric(10,2)
+  calculated_scope int
+  registered_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  탄소 배출 일별/월별 로그
+///////////////////////////////////////////////////////////
+Table CARBON_EMISSION_DAILY_LOG {
+  emission_log_id bigint [pk, increment]
+  car_id bigint [not null]
+  operation_date date [not null]
+  daily_calculated_emission numeric(12,4) [not null]
+  calculated_at timestamp [default: `now()`]
+}
+
+Table CARBON_EMISSION_MONTHLY_LOG {
+  monthly_id bigint [pk, increment]
+  car_id bigint [not null]
+  year integer [not null]
+  month integer [not null]
+  total_emission numeric(14,4) [not null]
+  created_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  배출 목표
+///////////////////////////////////////////////////////////
+Table EMISSION_TARGET {
+  target_id bigint [pk, increment]
+  year integer [not null]
+  month integer
+  target_type enum('Overall','Company','Scope1','Scope3') [not null]
+  target_company_id bigint
+  target_emission numeric(12,4) [not null]
+  set_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  저감 활동 및 사진
+///////////////////////////////////////////////////////////
+Table REDUCTION_ACTIVITY {
+  activity_id bigint [pk, increment]
+  activity_period_start date [not null]
+  activity_period_end date [not null]
+  activity_name varchar(200) [not null]
+  activity_details text [not null]
+  cost_amount numeric(15,2)
+  expected_effect text [note: '저감 활동의 기대 효과']
+  recorded_at timestamp [default: `now()`]
+}
+
+Table REDUCTION_ACTIVITY_PHOTO {
+  photo_id bigint [pk, increment]
+  activity_id bigint [not null]
+  photo_url text [not null]
+  uploaded_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  사용자 계정
+///////////////////////////////////////////////////////////
+Table USER_ACCOUNT {
+  user_id bigint [pk, increment]
+  username varchar(100) [not null, unique]
+  password_hash varchar(255) [not null]
+  role enum('super_admin','admin','viewer') [not null]
+  last_login timestamp
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
+///////////////////////////////////////////////////////////
+//  외래 키 참조 (테이블 블록 외부에 위치)
+///////////////////////////////////////////////////////////
+Ref: CAR_CATEGORY.parent_id > CAR_CATEGORY.category_id
+Ref: CAR_MODEL.category_id > CAR_CATEGORY.category_id
+Ref: COMPANY_ITEM_MAP.company_id > COMPANY.company_id
+Ref: CARBON_EMISSION_DAILY_LOG.car_id > VEHICLE.car_id
+Ref: CARBON_EMISSION_MONTHLY_LOG.car_id > VEHICLE.car_id
+Ref: VEHICLE.car_model_id > CAR_MODEL.car_model_id
+Ref: VEHICLE.company_id > COMPANY.company_id
+Ref: VEHICLE.operation_purpose_id > OPERATION_PURPOSE.purpose_id
+Ref: COMPANY_PROCESS_MAP.company_id > COMPANY.company_id
+Ref: COMPANY_PROCESS_MAP.process_id > PROCESS.process_id
+Ref: COMPANY_OPERATION_PURPOSE_MAP.company_id > COMPANY.company_id
+Ref: COMPANY_OPERATION_PURPOSE_MAP.purpose_id > OPERATION_PURPOSE.purpose_id
+Ref: COMPANY_PRODUCT_CLASS.company_id > COMPANY.company_id
+Ref: COMPANY_PRODUCT_CLASS.product_class_id > PRODUCT_CLASS.product_class_id
+Ref: REDUCTION_ACTIVITY_PHOTO.activity_id > REDUCTION_ACTIVITY.activity_id
+Ref: EMISSION_TARGET.target_company_id > COMPANY.company_id
+Ref: NICEPARK_VEHICLE_LOG.car_number - VEHICLE.car_number
+Ref: S1_EMPLOYEE_LOG.member_id - VEHICLE.driver_member_id
