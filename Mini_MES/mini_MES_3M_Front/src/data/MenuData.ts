@@ -1,6 +1,10 @@
+import { ChevronDown, BarChart2, Clock, Settings, User, FileText, Upload } from 'lucide-react'; 
+
+
 export const menuItems = [
   {
     title: "수주품목", // 1 depth
+    icon: BarChart2,
     items: [
       {
         name: "수주품목 입고", // 2 depth (중간 항목)
