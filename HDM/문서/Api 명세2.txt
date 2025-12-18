@@ -1,0 +1,395 @@
+지금까지 프론트엔드 화면을 구현하면서 구체화된 데이터 구조(컬럼, 필터, 차트 데이터 등)를 모두 반영하여 \*\*최신화된 API 명세서 (v2)\*\*를 작성해 드립니다.
+
+요청하신 대로 `/api` 접두어는 제거하고, **Request/Response Body**를 실제 개발에 바로 사용할 수 있도록 구체적으로 정의했습니다.
+
+-----
+
+# ✅ **현대정밀 - API 명세서 (v2.0)**
+
+**공통 사항**
+
+  * **Base URL:** `http://api.server.com` (또는 로컬 `http://localhost:8080`)
+  * **인증 방식:** Header에 `Authorization: Bearer <token>` 포함
+  * **응답 형식:** JSON
+  * **날짜 형식:** `YYYY-MM-DD` (String)
+
+-----
+
+# 📌 **1. 인증 / 계정 (Auth)**
+
+## **1.1 로그인**
+
+**POST** `/login`
+
+**Request**
+
+```json
+{
+  "username": "admin01",
+  "password": "password123"
+}
+```
+
+**Response**
+
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI...",
+  "user": {
+    "id": 1,
+    "username": "admin01",
+    "role": "admin"  // "admin" | "viewer"
+  }
+}
+```
+
+## **1.2 계정 생성**
+
+**POST** `/users`
+
+**Request**
+
+```json
+{
+  "username": "user01",
+  "password": "password123",
+  "role": "viewer"
+}
+```
+
+-----
+
+# 📌 **2. 대시보드 (Dashboard)**
+
+## **2.1 대시보드 통합 데이터 조회**
+
+**GET** `/dashboard?year=2025`
+
+**Response**
+
+```json
+{
+  "summary": {
+    "year": 2025,
+    "totalEmission": 8000,
+    "targetEmission": 10000,
+    "diffPercent": -20.0
+  },
+  "monthlyTrend": [
+    { "month": 1, "total": 500, "target": 800, "scope1": 200, "scope3": 300, "lastYear": 450 },
+    { "month": 2, "total": 600, "target": 800, "scope1": 250, "scope3": 350, "lastYear": 500 }
+    // ... 12월까지
+  ],
+  "yearlyHistory": [
+    { "year": 2016, "scope1": 750, "scope3": 1500 },
+    // ... 2025년까지
+  ],
+  "purposePie": [
+    { "name": "출퇴근", "value": 35 },
+    { "name": "납품", "value": 25 },
+    { "name": "출장", "value": 20 },
+    { "name": "공정운영", "value": 15 },
+    { "name": "기타", "value": 5 }
+  ]
+}
+```
+
+-----
+
+# 📌 **3. 배출량 상세 조회 (Analysis)**
+
+*(기간별, 업체별, 운행목적별 등 분석 페이지 공통 사용 패턴)*
+
+## **3.1 기간별 탄소 배출량 (캘린더 선택)**
+
+**GET** `/emissions/period?startDate=2024-01-01&endDate=2025-01-01`
+
+**Response**
+
+```json
+{
+  "current": {
+    "scope1": 15000,
+    "scope3": 20000,
+    "total": 35000,
+    "distance": 1250000
+  },
+  "previous": {
+    "scope1": 14000,
+    "scope3": 18000,
+    "total": 32000
+  },
+  "diffPercent": 9.4
+}
+```
+
+## **3.2 카테고리별 배출량 조회 (차트 & 테이블용)**
+
+**GET** `/emissions/category?type={category}&year=2025&month=all`
+
+  * `type`: `company`(업체), `purpose`(운행목적), `fuel`(연료), `process`(공정), `product`(품목)
+
+**Response** (예: type=company)
+
+```json
+[
+  {
+    "id": 1,
+    "name": "현대정밀",
+    "totalEmission": 9429,
+    "ratio": 15.5,
+    "distance": 1132,
+    "count": 50,          // 운행횟수 (운행목적, 공정 등)
+    "carCount": 5,        // 차량등록수 (업체별일 때)
+    "avgEmission": 188,   // 평균배출량
+    "address": "울산광역시 북구", // 주소 (업체별일 때)
+    "monthlyTrend": [100, 120, 90, ... ] // 1~12월 데이터 (라인 차트용)
+  },
+  // ... 리스트
+]
+```
+
+## **3.3 목표 대비 배출량 비교**
+
+**GET** `/emissions/target-compare?year=2025&scope=total`
+
+**Response**
+
+```json
+{
+  "year": 2025,
+  "scope": "total",
+  "totalActual": 12500,
+  "totalTarget": 10000,
+  "diff": 2500,
+  "diffPercent": 25.0,
+  "isExceeded": true,
+  "monthlyData": [
+    { "month": 1, "actual": 600, "target": 800 },
+    { "month": 2, "actual": 700, "target": 800 }
+    // ...
+  ]
+}
+```
+
+-----
+
+# 📌 **4. 저감 활동 (Reduction Activities)**
+
+## **4.1 활동 목록 조회**
+
+**GET** `/activities?startDate=2025-01-01&endDate=2025-12-31`
+
+**Response**
+
+```json
+[
+  {
+    "id": 1,
+    "title": "공회전 제한 캠페인",
+    "startDate": "2025-11-01",
+    "endDate": "2025-11-07",
+    "content": "사내 주차장 캠페인 진행...",
+    "cost": 1200000,
+    "effect": "연료 절감",
+    "imageUrl": "/uploads/activity/img_01.jpg"
+  }
+]
+```
+
+## **4.2 활동 등록 (파일 포함)**
+
+**POST** `/activities`
+
+  * **Content-Type:** `multipart/form-data`
+
+**Request (FormData)**
+
+  * `title`: "하이브리드 차량 도입"
+  * `startDate`: "2025-01-01"
+  * `endDate`: "2025-12-31"
+  * `content`: "내용..."
+  * `cost`: 45000000
+  * `effect`: "탄소 30% 저감"
+  * `image`: (File Object)
+
+## **4.3 활동 수정**
+
+**PUT** `/activities/{id}`
+
+  * (FormData 사용, 이미지 변경 없을 시 image 필드 제외)
+
+## **4.4 활동 삭제**
+
+**DELETE** `/activities/{id}`
+
+-----
+
+# 📌 **5. 기준정보 관리 (Management)**
+
+*(StandardDataManagementTable 컴포넌트 사용)*
+
+## **5.1 출입 차량 관리**
+
+  * **조회:** **GET** `/management/vehicles`
+  * **등록:** **POST** `/management/vehicles`
+  * **수정:** **PUT** `/management/vehicles/{id}`
+  * **삭제:** **DELETE** `/management/vehicles/{id}`
+  * **일괄 삭제:** **POST** `/management/vehicles/batch-delete` (Body: `{"ids": [1, 2, 3]}`)
+
+**Vehicle Data Structure**
+
+```json
+{
+  "id": 1,
+  "carNumber": "12가3456",
+  "purpose": "출퇴근",
+  "scope": "Scope1",
+  "vendorName": "현대정밀",
+  "employeeId": "30",
+  "distance": "4.7",
+  "categoryLarge": "승용차",
+  "categorySmall": "중형",
+  "carModel": "쏘나타",
+  "fuelType": "휘발유",
+  "note": "비고"
+}
+```
+
+## **5.2 업체명 및 주소지 관리**
+
+  * **URL:** `/management/companies` (GET, POST, PUT, DELETE)
+
+**Company Data Structure**
+
+```json
+{
+  "id": 1,
+  "vendorName": "협력업체A",
+  "processName": "도장",
+  "distance": "12.5",
+  "productClass": "1000",
+  "address": "서울시 강남구...",
+  "note": "비고"
+}
+```
+
+## **5.3 차종 및 연비 관리**
+
+  * **URL:** `/management/car-models`
+
+**CarModel Data Structure**
+
+```json
+{
+  "id": 1,
+  "categoryLarge": "승용차",
+  "categorySmall": "중형",
+  "fuelType": "휘발유",
+  "fuelEfficiency": "12.5"
+}
+```
+
+## **5.4 생산 공정 관리**
+
+  * **URL:** `/management/processes`
+
+**Process Data Structure**
+
+```json
+{ "id": 1, "processName": "프레스" }
+```
+
+## **5.5 운행 목적 관리**
+
+  * **URL:** `/management/purposes`
+
+**Purpose Data Structure**
+
+```json
+{ "id": 1, "purpose": "납품", "scope": "Scope3" }
+```
+
+## **5.6 생산 품목 구분 관리**
+
+  * **URL:** `/management/products`
+
+**Product Data Structure**
+
+```json
+{ "id": 1, "productClass": "1000", "note": "설명" }
+```
+
+-----
+
+# 📌 **6. 데이터 업로드 (Excel Upload)**
+
+## **6.1 나이스파크 데이터 업로드**
+
+**POST** `/upload/nicepark`
+
+  * **Content-Type:** `multipart/form-data`
+  * **Body:** `file` (Excel File)
+
+## **6.2 에스원 데이터 업로드**
+
+**POST** `/upload/s1`
+
+  * **Content-Type:** `multipart/form-data`
+  * **Body:** `file` (Excel File)
+
+## **6.3 업로드 이력/데이터 조회 (미리보기용)**
+
+**GET** `/upload/history?year=2025&month=7`
+
+**Response**
+
+```json
+{
+  "nicePark": [
+    { "carNumber": "12가3456", "entryDate": "2025-07-01", "entryTime": "14:00" }
+  ],
+  "s1": [
+    { "workDate": "2025-07-01", "employeeId": "1001" }
+  ]
+}
+```
+
+## **6.4 업로드 데이터 확정 (DB 저장)**
+
+**POST** `/upload/confirm`
+
+  * **Body:**
+
+<!-- end list -->
+
+```json
+{
+  "year": "2025",
+  "month": "7",
+  "dataTypes": ["nicepark", "s1"] 
+}
+```
+
+-----
+
+# 📌 **7. 공통 옵션 조회 (Dropdown Options)**
+
+*(프론트엔드 하드코딩 대신 DB에서 관리할 경우)*
+
+**GET** `/options`
+
+**Response**
+
+```json
+{
+  "purposes": ["납품", "출퇴근", "고객", "기타"],
+  "fuelTypes": ["휘발유", "경유", "LPG", "전기", "수소"],
+  "carCategories": {
+    "large": ["승용차", "상용트럭"],
+    "small": ["대형", "중형", "소형", "경차"]
+  },
+  "processes": ["프레스", "차체", "도장", "조립"],
+  "productClasses": ["1000", "2000", "3000"]
+}
+```
