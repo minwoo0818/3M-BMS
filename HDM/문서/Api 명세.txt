@@ -21,7 +21,7 @@
 
 ## **1.1 로그인**
 
-**POST /login**
+**POST /user/login**
 
 ### Request
 
@@ -46,7 +46,7 @@
 
 ## **1.3 계정 생성**
 
-**POST /users**
+**POST /superadmin/create*
 
 ```json
 {
